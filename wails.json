@@ -1,0 +1,17 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "tv-share",
+  "outputfilename": "TVShare",
+  "frontend:install": "",
+  "frontend:build": "",
+  "author": {
+    "name": "Mehdi-Ks"
+  },
+  "info": {
+    "companyName": "TV Share",
+    "productName": "TV Share",
+    "productVersion": "1.0.0",
+    "copyright": "MIT License",
+    "comments": "Watch your PC's movies on your TV, with subtitles"
+  }
+}

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TV Share</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="3" y="6" width="26" height="17" rx="3.5" fill="none" stroke="currentColor" stroke-width="2.2"/>
+        <path d="M11 28h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M14 11.2v6.6l5.6-3.3z" fill="currentColor"/>
+      </svg>
+      <span class="brand-name">TV Share</span>
+    </div>
+    <div class="topbar-right">
+      <span id="statusPill" class="pill pill-off"><span class="dot"></span><span id="statusText">Not sharing</span></span>
+      <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13.5a7.7 7.7 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.6 7.6 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.7 7.7 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.4 1 2-3.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- First launch: install the two helpers -->
+  <section id="setup" class="setup hidden">
+    <div class="setup-card">
+      <h1>One-time setup</h1>
+      <p>TV Share uses two free, open-source helpers. They install in a minute or two, with Windows' own installer.</p>
+      <ul class="helper-list">
+        <li><span id="depRclone" class="check"></span><div><strong>rclone</strong><small>Shows your movie folder to the TV</small></div></li>
+        <li><span id="depFfmpeg" class="check"></span><div><strong>FFmpeg</strong><small>Puts subtitles inside movies so the TV shows them</small></div></li>
+      </ul>
+      <button id="installBtn" class="btn btn-primary btn-lg">Install helpers</button>
+      <p id="setupLog" class="setup-log" aria-live="polite"></p>
+      <p id="setupError" class="error hidden"></p>
+    </div>
+  </section>
+
+  <main id="main" class="layout hidden">
+    <div class="col-left">
+      <!-- Share -->
+      <section class="card share-card" id="shareCard">
+        <div class="share-head">
+          <div>
+            <h2 id="shareTitle">Share with your TV</h2>
+            <p id="shareSub" class="muted">Your TV can't see anything yet.</p>
+          </div>
+        </div>
+        <button id="shareBtn" class="share-btn" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <span id="shareBtnText">Start sharing</span>
+        </button>
+        <dl class="facts">
+          <div><dt>Folder</dt><dd><span id="folderPath" class="path"></span><button id="folderBtn" class="link-btn">Change</button></dd></div>
+          <div><dt>TV sees it as</dt><dd><span id="nameText"></span><button id="nameBtn" class="link-btn">Rename</button></dd></div>
+          <div><dt>Network</dt><dd id="netText" class="muted">Checking…</dd></div>
+        </dl>
+        <div id="netWarn" class="note note-warn hidden">
+          <strong>Windows treats this network as public.</strong>
+          If your TV can't find this PC, set the network to <em>Private</em>. Only do this on your home Wi-Fi.
+          <button id="netBtn" class="link-btn">Open network settings</button>
+        </div>
+        <p id="shareError" class="error hidden"></p>
+      </section>
+
+      <!-- How to watch -->
+      <section class="card">
+        <h2>Watch on your TV</h2>
+        <ol class="steps">
+          <li>Keep this app open and the PC awake, on the <strong>same Wi-Fi</strong> as the TV.</li>
+          <li>On the TV, open <strong>VLC</strong> (free in the TV's app store).</li>
+          <li>Go to <strong>Browse</strong> → <strong>Local network</strong> → <strong id="nameText2">your PC</strong>.</li>
+        </ol>
+        <p class="muted small">Also works with Kodi, game consoles and most smart-TV media players. The first time, if Windows asks whether to allow access on the network, click <strong>Allow</strong>.</p>
+      </section>
+    </div>
+
+    <!-- Movies -->
+    <section class="card movies-card">
+      <div class="movies-head">
+        <div>
+          <h2>Movies</h2>
+          <p class="muted small" id="moviesSub">Looking for movies…</p>
+        </div>
+        <div class="head-actions">
+          <button id="openFolderBtn" class="btn btn-ghost">Open folder</button>
+          <button id="refreshBtn" class="btn btn-ghost" title="Look again">Refresh</button>
+        </div>
+      </div>
+      <div class="explain">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>TVs usually ignore separate subtitle files. <strong>Add subtitles</strong> builds them into the movie: no quality loss, about a minute.</span>
+      </div>
+      <ul id="movieList" class="movie-list" aria-live="polite"></ul>
+      <div id="emptyState" class="empty hidden">
+        <p><strong>No movies here yet.</strong></p>
+        <p class="muted">Put movies in <span id="emptyFolder" class="path"></span>, or drop a movie folder onto this window.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="dropOverlay" class="drop-overlay hidden"><div>Drop to add this movie</div></div>
+
+  <!-- Settings -->
+  <dialog id="settingsDlg" class="dialog">
+    <form method="dialog">
+      <h2>Settings</h2>
+      <label class="row-toggle"><span><strong>Start sharing when the app opens</strong><small>Saves a click every time.</small></span><input type="checkbox" id="optAutoStart" class="switch"></label>
+      <label class="row-toggle"><span><strong>Open with Windows</strong><small>Starts quietly in the background when you sign in.</small></span><input type="checkbox" id="optLogin" class="switch"></label>
+      <label class="row-toggle"><span><strong>Move the original to the Recycle Bin</strong><small>After subtitles are added and the new file checks out. Saves disk space.</small></span><input type="checkbox" id="optRecycle" class="switch"></label>
+      <label class="row-select"><span><strong>Preferred subtitle language</strong><small>Picked first when a movie has several.</small></span><select id="optLang"></select></label>
+      <p class="muted small" id="versionText"></p>
+      <div class="dialog-actions"><button class="btn btn-primary" value="close">Done</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="nameDlg" class="dialog dialog-sm">
+    <form method="dialog" id="nameForm">
+      <h2>Name on the TV</h2>
+      <p class="muted small">This is what you'll pick on the TV.</p>
+      <input id="nameInput" class="input" maxlength="40" autocomplete="off" spellcheck="false">
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" value="cancel" formnovalidate>Cancel</button>
+        <button class="btn btn-primary" value="save" id="nameSave">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

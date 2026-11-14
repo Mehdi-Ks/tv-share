@@ -1,0 +1,14 @@
+# Build output
+build/bin/
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# Media never belongs in this repo
+*.mp4
+*.mkv
+*.avi
+*.srt
