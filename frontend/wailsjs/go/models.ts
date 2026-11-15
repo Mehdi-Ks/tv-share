@@ -140,6 +140,7 @@ export namespace main {
 	    launchAtLogin: boolean;
 	    recycleOriginal: boolean;
 	    subLang: string;
+	    setupDone: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -154,6 +155,7 @@ export namespace main {
 	        this.launchAtLogin = source["launchAtLogin"];
 	        this.recycleOriginal = source["recycleOriginal"];
 	        this.subLang = source["subLang"];
+	        this.setupDone = source["setupDone"];
 	    }
 	}
 	export class State {

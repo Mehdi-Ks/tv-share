@@ -60,17 +60,21 @@ function coverColors(t) {
 async function load() {
   state = await api().GetState();
   render();
-  if (state.deps.ready) loadMovies();
+  if (state.deps.ready && state.settings.setupDone) loadMovies();
   api().RefreshNetwork().then((n) => { state.network = n; render(); });
 }
 
 function render() {
   const s = state;
-  const ready = s.deps.ready;
-  $("setup").classList.toggle("hidden", ready);
+  const ready = s.deps.ready && s.settings.setupDone;
+  $("setup").classList.toggle("hidden", s.deps.ready);
+  const welcome = s.deps.ready && !s.settings.setupDone;
+  if (welcome && $("welcome").classList.contains("hidden")) showWelcome();
+  $("welcome").classList.toggle("hidden", !welcome);
   $("main").classList.toggle("hidden", !ready);
   $("searchWrap").style.visibility = ready ? "" : "hidden";
   $("shareBtn").style.visibility = ready ? "" : "hidden";
+  $("settingsBtn").style.visibility = ready ? "" : "hidden";
   $("depRclone").className = "check" + (s.deps.rclone ? " done" : "");
   $("depFfmpeg").className = "check" + (s.deps.ffmpeg ? " done" : "");
 
@@ -112,7 +116,6 @@ $("installBtn").addEventListener("click", async () => {
     state.deps = deps;
     $("setupLog").textContent = "";
     if (deps.ready) {
-      toast("All set. Turn on “Share with TV” to start.");
       await load();
     }
   } catch (e) {
@@ -123,6 +126,45 @@ $("installBtn").addEventListener("click", async () => {
   } finally {
     btn.disabled = false;
     btn.textContent = "Install helpers";
+  }
+});
+
+// ---------- first run: folder and name ----------
+let wFolder = "";
+async function showWelcome() {
+  wFolder = state.settings.folder;
+  $("wName").value = state.settings.name;
+  await updateWelcomeFolder();
+}
+async function updateWelcomeFolder() {
+  $("wFolder").textContent = wFolder;
+  $("wCount").className = "muted";
+  $("wCount").textContent = "Looking for movies…";
+  const n = await api().CountMovies(wFolder);
+  $("wCount").textContent = n < 0 ? "This folder doesn't exist. Choose another one."
+    : n === 0 ? "No movies here yet. That's fine, you can add them later."
+    : `${n} movie${n > 1 ? "s" : ""} found`;
+  if (n > 0) $("wCount").className = "found";
+}
+$("wChoose").addEventListener("click", async () => {
+  try {
+    const dir = await api().PickFolder(wFolder);
+    if (dir) { wFolder = dir; await updateWelcomeFolder(); }
+  } catch (e) { toast(errText(e), true); }
+});
+$("welcomeForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("wError").classList.add("hidden");
+  $("wDone").disabled = true;
+  try {
+    await api().FinishSetup(wFolder, $("wName").value);
+    await load();
+    toast("All set. Turn on Share with TV to show your movies on the TV.");
+  } catch (err) {
+    $("wError").textContent = errText(err);
+    $("wError").classList.remove("hidden");
+  } finally {
+    $("wDone").disabled = false;
   }
 });
 
@@ -225,9 +267,10 @@ function closeDrawer() {
 }
 // While the panel is open, keyboard and screen readers stay inside it.
 function setBackgroundInert(on) {
-  for (const n of [$("main"), $("setup"), document.querySelector(".topbar")]) n.inert = on;
+  for (const n of [$("main"), $("setup"), $("welcome"), document.querySelector(".topbar")]) n.inert = on;
 }
 $("helpBtn").addEventListener("click", openDrawer);
+$("drawerSettings").addEventListener("click", () => { closeDrawer(); $("settingsBtn").click(); });
 $("drawerClose").addEventListener("click", closeDrawer);
 $("scrim").addEventListener("click", closeDrawer);
 document.addEventListener("keydown", (e) => {

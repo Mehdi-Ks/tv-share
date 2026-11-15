@@ -40,6 +40,11 @@ type Movie struct {
 
 // scanMovies lists the videos in root (and its sub-folders, up to 3 levels).
 func scanMovies(root, prefLang string) []Movie {
+	return describeMovies(findVideos(root), root, prefLang)
+}
+
+// findVideos lists the movie files in root (and its sub-folders, up to 3 levels), quickly.
+func findVideos(root string) []string {
 	var paths []string
 	rootDepth := strings.Count(filepath.Clean(root), string(os.PathSeparator))
 	_ = filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
@@ -65,7 +70,7 @@ func scanMovies(root, prefLang string) []Movie {
 		}
 		return nil
 	})
-	return describeMovies(paths, root, prefLang)
+	return paths
 }
 
 func isVideo(p string) bool { return videoExts[strings.ToLower(filepath.Ext(p))] }

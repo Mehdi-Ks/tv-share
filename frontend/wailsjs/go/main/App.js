@@ -14,6 +14,14 @@ export function ChooseFolder() {
   return window['go']['main']['App']['ChooseFolder']();
 }
 
+export function CountMovies(arg1) {
+  return window['go']['main']['App']['CountMovies'](arg1);
+}
+
+export function FinishSetup(arg1, arg2) {
+  return window['go']['main']['App']['FinishSetup'](arg1, arg2);
+}
+
 export function GetBackdrop(arg1) {
   return window['go']['main']['App']['GetBackdrop'](arg1);
 }
@@ -52,6 +60,10 @@ export function OpenNetworkSettings() {
 
 export function OpenURL(arg1) {
   return window['go']['main']['App']['OpenURL'](arg1);
+}
+
+export function PickFolder(arg1) {
+  return window['go']['main']['App']['PickFolder'](arg1);
 }
 
 export function RefreshNetwork() {

@@ -70,6 +70,29 @@
     </div>
   </section>
 
+  <!-- First run, step 2: where the movies are, and the name the TV shows -->
+  <section id="welcome" class="setup hidden">
+    <form id="welcomeForm" class="setup-card">
+      <svg class="setup-icon" aria-hidden="true"><use href="#i-folder"/></svg>
+      <h1 class="display">Where are your movies?</h1>
+      <p class="muted">Your TV will see this folder and everything inside it. Nothing else on your PC.</p>
+      <div class="pick">
+        <div class="pick-text">
+          <span id="wFolder" class="path"></span>
+          <small id="wCount" class="muted"></small>
+        </div>
+        <button type="button" id="wChoose" class="btn btn-ghost">Choose another folder</button>
+      </div>
+      <label class="field">
+        <strong>Name on the TV</strong>
+        <small class="muted">You'll pick this name on the TV, so make it easy to spot.</small>
+        <input id="wName" class="input" maxlength="40" autocomplete="off" spellcheck="false" required>
+      </label>
+      <button id="wDone" class="btn btn-primary btn-lg" type="submit">Continue</button>
+      <p id="wError" class="error hidden" role="alert"></p>
+    </form>
+  </section>
+
   <main id="main" class="main hidden">
     <div class="shelf-head">
       <div>
@@ -124,12 +147,7 @@
       VLC is resuming it from the very end. Long-press the movie in VLC and choose <strong>Play from start</strong>.
     </div>
 
-    <h3 class="drawer-sub">Your share</h3>
-    <dl class="facts">
-      <div><dt>TV sees it as</dt><dd><span class="tv-name"></span><button id="nameBtn" class="link-btn">Rename</button></dd></div>
-      <div><dt>Folder</dt><dd><span id="folderPath" class="path"></span><button id="folderBtn" class="link-btn">Change</button></dd></div>
-      <div><dt>Network</dt><dd id="netText">Checking…</dd></div>
-    </dl>
+    <p class="muted small drawer-note">Rename your PC or change the movie folder in <button id="drawerSettings" class="link-inline">Settings</button>.</p>
     <p class="muted small">Also works with Kodi, game consoles and most smart-TV media players. The first time, if Windows asks whether to allow network access, click <strong>Allow</strong>.</p>
     <button id="helpLink" class="link-btn help-link">More fixes for common problems</button>
   </aside>
@@ -171,6 +189,13 @@
         <h2 class="display">Settings</h2>
         <button class="icon-btn" value="close" aria-label="Close settings" title="Close (Esc)"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
       </div>
+      <h3 class="dialog-sub">Your share</h3>
+      <dl class="facts">
+        <div><dt>Name on the TV</dt><dd><span class="tv-name"></span><button type="button" id="nameBtn" class="link-btn">Rename</button></dd></div>
+        <div><dt>Movie folder</dt><dd><span id="folderPath" class="path"></span><button type="button" id="folderBtn" class="link-btn">Change</button></dd></div>
+        <div><dt>Network</dt><dd id="netText">Checking…</dd></div>
+      </dl>
+      <h3 class="dialog-sub">Options</h3>
       <label class="row-toggle"><span><strong>Start sharing when the app opens</strong><small>Saves a click every time.</small></span><input type="checkbox" id="optAutoStart" class="switch"></label>
       <label class="row-toggle"><span><strong>Open with Windows</strong><small>Starts quietly in the background when you sign in.</small></span><input type="checkbox" id="optLogin" class="switch"></label>
       <label class="row-toggle"><span><strong>Move the original to the Recycle Bin</strong><small>After subtitles are added and the new file checks out. Saves disk space.</small></span><input type="checkbox" id="optRecycle" class="switch"></label>

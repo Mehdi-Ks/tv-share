@@ -22,6 +22,9 @@ and no quality loss. It takes about a minute.
 2. Run it and click **Install**. No admin rights needed. You get a Start menu and desktop shortcut, and it shows
    up in *Settings → Apps → Installed apps* for uninstalling.
 3. The first time the app opens, click **Install helpers**. TV Share sets up two free tools it needs (see below), using Windows' own installer.
+   Then choose the folder with your movies (your *Videos* folder is suggested) and the name you'll pick on the TV.
+
+   ![First run: choose your movie folder and the name on the TV](docs/screenshot-welcome.png)
 
 Prefer no install? Download `TVShare.exe` instead and run it from anywhere (a USB stick, Downloads, ...).
 
@@ -39,13 +42,13 @@ Needs Windows 10 or 11, 64-bit.
 
 Keyboard: arrow keys move across the posters, Enter opens a movie, Esc goes back, Ctrl+F searches.
 
-The **?** button opens these steps inside the app, with your PC's name, folder and network.
+The **?** button opens these steps inside the app. Your PC's name on the TV, the movie folder and the network are in **Settings**.
 
 ![The "Watch on your TV" panel](docs/screenshot-help.png)
 
 **On the TV**
 1. Install **VLC** from the TV's app store (free). Most smart TVs, Android TV / Google TV, Fire TV and game consoles have it.
-2. In VLC, go to **Browse → Local network** and pick your PC's name (shown in the app under *TV sees it as*).
+2. In VLC, go to **Browse → Local network** and pick your PC's name (shown in the app's Settings under *Name on the TV*).
 3. Open a movie.
 
 VLC is the recommended player, but anything that can browse a "media server" (DLNA/UPnP) works: Kodi, Xbox and
@@ -108,7 +111,7 @@ wails build -clean -trimpath
 ```
 
 The app ends up in `build/bin/TVShare.exe`. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.2.1 build/installer/tvshare.nsi`, which writes
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.3.0 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 

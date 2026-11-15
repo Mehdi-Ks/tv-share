@@ -158,3 +158,11 @@ func TestParseProbe(t *testing.T) {
 		t.Fatalf("subs: %v", info.Subtitles)
 	}
 }
+
+func TestFirstName(t *testing.T) {
+	for in, want := range map[string]string{"Mehdi KSIBI": "Mehdi", "": "", "  Ana  ": "Ana", `DOMAIN\user`: "", "a@b.com": ""} {
+		if got := firstName(in); got != want {
+			t.Errorf("firstName(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

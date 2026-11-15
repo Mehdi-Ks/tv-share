@@ -26,6 +26,21 @@ var allowSetForeground = windows.NewLazySystemDLL("user32.dll").NewProc("AllowSe
 
 const asfwAny = ^uint32(0) // ASFW_ANY
 
+// windowsDisplayName is the account's full name ("Mehdi K."), or "" when Windows has none.
+func windowsDisplayName() string {
+	proc := windows.NewLazySystemDLL("secur32.dll").NewProc("GetUserNameExW")
+	if proc.Find() != nil {
+		return ""
+	}
+	const nameDisplay = 3
+	n := uint32(256)
+	buf := make([]uint16, n)
+	if r, _, _ := proc.Call(nameDisplay, uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&n))); r == 0 {
+		return ""
+	}
+	return strings.TrimSpace(windows.UTF16ToString(buf[:n]))
+}
+
 // lowPriority runs a long job (copying a movie, taking frames) below normal priority.
 func lowPriority(cmd *exec.Cmd) {
 	cmd.SysProcAttr.CreationFlags |= 0x00004000 // BELOW_NORMAL_PRIORITY_CLASS

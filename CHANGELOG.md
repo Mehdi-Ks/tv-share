@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0 (2026-11-15)
+
+- **First-run screen: "Where are your movies?"** After the helpers install, pick the folder your TV will see
+  (it says how many movies it found there) and the name you'll look for on the TV. If you've changed any setting
+  before, you skip it and your settings are kept; otherwise it shows once.
+- **Your share moved to Settings**: the name on the TV, the movie folder and the network are now in Settings,
+  next to the other options. The **?** panel is only about watching: the steps and the VLC tip.
+- **A friendlier default name**: the first name from your Windows account ("Mehdi's PC") when Windows has
+  one, instead of the sign-in name.
+
 ## 1.2.1 (2026-11-15)
 
 - **Settings is easier to close**: a close button (✕) in its corner, and clicking outside it closes it too, as does

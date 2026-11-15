@@ -8,6 +8,10 @@ export function CancelSubtitles():Promise<void>;
 
 export function ChooseFolder():Promise<string>;
 
+export function CountMovies(arg1:string):Promise<number>;
+
+export function FinishSetup(arg1:string,arg2:string):Promise<void>;
+
 export function GetBackdrop(arg1:string):Promise<string>;
 
 export function GetMovieInfo(arg1:string):Promise<main.MovieInfo>;
@@ -27,6 +31,8 @@ export function OpenFolder(arg1:string):Promise<void>;
 export function OpenNetworkSettings():Promise<void>;
 
 export function OpenURL(arg1:string):Promise<void>;
+
+export function PickFolder(arg1:string):Promise<string>;
 
 export function RefreshNetwork():Promise<main.NetworkInfo>;
 

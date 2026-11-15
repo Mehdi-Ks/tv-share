@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.2.1"
+const appVersion = "1.3.0"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().
@@ -158,6 +158,37 @@ func (a *App) ChooseFolder() (string, error) {
 		return cur, err
 	}
 	return dir, a.updateSettings(func(s *Settings) { s.Folder = dir })
+}
+
+// PickFolder asks for a folder without saving it (first-run screen).
+func (a *App) PickFolder(cur string) (string, error) {
+	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:            "Choose the folder with your movies",
+		DefaultDirectory: cur,
+	})
+}
+
+// CountMovies says how many movies a folder holds, for the first-run screen.
+func (a *App) CountMovies(folder string) int {
+	if !dirExists(folder) {
+		return -1
+	}
+	return len(findVideos(folder))
+}
+
+// FinishSetup saves the first-run choices: the movie folder and the name the TV shows.
+func (a *App) FinishSetup(folder, name string) error {
+	name = strings.TrimSpace(name)
+	if !dirExists(folder) {
+		return fmt.Errorf("that folder doesn't exist any more")
+	}
+	if name == "" {
+		return fmt.Errorf("give your PC a name, so you can find it on the TV")
+	}
+	if len(name) > 40 {
+		name = name[:40]
+	}
+	return a.updateSettings(func(s *Settings) { s.Folder, s.Name, s.SetupDone = folder, name, true })
 }
 
 func (a *App) SetName(name string) error {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/sys/windows"
 )
@@ -17,6 +18,7 @@ type Settings struct {
 	LaunchAtLogin   bool   `json:"launchAtLogin"`
 	RecycleOriginal bool   `json:"recycleOriginal"`
 	SubLang         string `json:"subLang"`
+	SetupDone       bool   `json:"setupDone"` // the first-run "Where are your movies?" screen was completed
 }
 
 func defaultSettings() Settings {
@@ -26,8 +28,11 @@ func defaultSettings() Settings {
 		folder = filepath.Join(home, "Videos")
 	}
 	// "DESKTOP-4F7Q2ZX" is hard to spot on a TV; "Mehdi's PC" is not.
+	// The account's display name ("Mehdi K.") beats the sign-in name, which is often a brand ("MSI").
 	name := "My PC"
-	if u := os.Getenv("USERNAME"); u != "" && len(u) <= 24 {
+	if first := firstName(windowsDisplayName()); first != "" {
+		name = first + "'s PC"
+	} else if u := os.Getenv("USERNAME"); u != "" && len(u) <= 24 {
 		name = u + "'s PC"
 	}
 	return Settings{
@@ -39,6 +44,15 @@ func defaultSettings() Settings {
 		RecycleOriginal: true,
 		SubLang:         "eng",
 	}
+}
+
+// firstName keeps the first word of a display name, if it looks like a name.
+func firstName(display string) string {
+	f := strings.Fields(display)
+	if len(f) == 0 || len(f[0]) > 20 || strings.ContainsAny(f[0], `@\/`) {
+		return ""
+	}
+	return f[0]
 }
 
 func settingsPath() string {
@@ -56,6 +70,13 @@ func loadSettings() Settings {
 		return s
 	}
 	_ = json.Unmarshal(b, &s)
+	// Settings saved before 1.3.0 have no "setupDone": those people are already set up.
+	var raw map[string]json.RawMessage
+	if json.Unmarshal(b, &raw) == nil {
+		if _, ok := raw["setupDone"]; !ok {
+			s.SetupDone = true
+		}
+	}
 	d := defaultSettings()
 	if s.Folder == "" {
 		s.Folder = d.Folder
