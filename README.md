@@ -6,7 +6,7 @@
 
 TV Share makes a folder on your PC (your *Videos* folder by default) show up on your TV, over your home Wi-Fi.
 Open VLC on the TV, pick your PC, and play. On the PC, your movies appear as a dark, cinematic wall of posters.
-Posters are either official ones from [TMDB](https://www.themoviedb.org) (you choose, see *Privacy* below) or a frame taken from the movie itself (the screenshot above shows the title covers used while posters load).
+Posters are either official ones from [TMDB](https://www.themoviedb.org) (you choose, see *Privacy* below) or a frame taken from the movie itself. The screenshots show Blender's free open movies with their TMDB posters.
 Sort by *Recently added*, *A to Z* or size, and click a poster for its details: runtime, picture quality, sound
 tracks and subtitles, over a wide frame from the film.
 
