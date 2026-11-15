@@ -172,6 +172,7 @@ $("nameDlg").addEventListener("close", async () => {
 });
 
 $("netBtn").addEventListener("click", () => api().OpenNetworkSettings());
+$("helpBtn").addEventListener("click", () => api().OpenURL("https://github.com/Mehdi-Ks/tv-share#when-something-doesnt-work"));
 $("openFolderBtn").addEventListener("click", () => api().OpenFolder(""));
 $("refreshBtn").addEventListener("click", async () => {
   api().RefreshNetwork().then((n) => { state.network = n; render(); });

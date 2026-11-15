@@ -92,10 +92,17 @@ wails build -clean -trimpath
 ```
 
 The app ends up in `build/bin/TVShare.exe`. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.0.0 build/installer/tvshare.nsi`, which writes
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.0.1 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 
+The app icon is drawn by `build/make_icon.py` (Python + Pillow). See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
+
+## Contributing
+
+Bug reports and pull requests are welcome. If something doesn't work on your TV, [open an issue](../../issues) with
+the TV model, the app you play with (VLC, Kodi, ...) and what you see. Please run `go test ./...` before sending a change.
+
 ## License
 
-[MIT](LICENSE). Use it, change it, share it.
+[MIT](LICENSE). Free and open source: use it, change it, share it.
