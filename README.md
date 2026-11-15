@@ -54,6 +54,7 @@ PlayStation media players, and many TVs' built-in media apps.
 |---|---|
 | The TV doesn't list your PC | Make sure both are on the **same Wi-Fi**. If the app says the network is *public*, click **Open network settings** and set it to **Private** (only on your home network). |
 | The PC shows up but nothing loads | Close and reopen VLC on the TV (or *Force stop* it in the TV's app settings), then try again. |
+| A movie won't start, or VLC opens a different file | VLC is using an old copy of the folder list (this happens after files were added, renamed or removed). On the TV: *Settings → Apps → VLC → Clear cache*. Quickest alternative: **Rename** the share in TV Share, so VLC sees it as new. |
 | Playback stops after a while | The PC went to sleep. Keep it plugged in and set sleep to *Never* while on power. |
 | "Port already in use" | Another copy of the share is running. Close it, or restart the PC. |
 | Subtitles still don't show | In VLC, open the subtitle menu during playback and pick the track. |
