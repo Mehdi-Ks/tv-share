@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.5.0"
+const appVersion = "1.6.0"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().
@@ -419,6 +419,9 @@ func (a *App) FindTMDBMatches(video, query string) ([]TMDBCandidate, error) {
 func (a *App) SetTMDBMatch(video string, id int) error {
 	return a.tmdb.matches.set(a.titleOf(video), id)
 }
+
+// SetLanguage tells the app which language the window shows ("en", "fr"), for TMDB plots and genres.
+func (a *App) SetLanguage(lang string) { a.tmdb.setLanguage(lang) }
 
 // SetTMDBChoice records the answer to "Use official posters?".
 func (a *App) SetTMDBChoice(on bool) error {

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0 (2026-11-15)
+
+- **TV Share speaks French.** The app follows Windows' language automatically (French or English), and
+  *Settings → App language* lets you pick. Everything is translated: setup, the poster wall, the movie page,
+  help, settings, progress steps and error messages. Movie titles stay as they are.
+- With official posters on, TMDB's plots and genres come in French too.
+- Translations live in one file (`frontend/dist/i18n.js`); adding a language means copying the French block.
+
 ## 1.5.0 (2026-11-15)
 
 Found by testing on a brand-new Windows PC (Windows Sandbox):

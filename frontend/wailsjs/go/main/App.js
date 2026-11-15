@@ -82,6 +82,10 @@ export function RefreshNetwork() {
   return window['go']['main']['App']['RefreshNetwork']();
 }
 
+export function SetLanguage(arg1) {
+  return window['go']['main']['App']['SetLanguage'](arg1);
+}
+
 export function SetName(arg1) {
   return window['go']['main']['App']['SetName'](arg1);
 }

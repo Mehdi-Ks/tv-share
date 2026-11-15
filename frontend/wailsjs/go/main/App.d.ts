@@ -42,6 +42,8 @@ export function PickFolder(arg1:string):Promise<string>;
 
 export function RefreshNetwork():Promise<main.NetworkInfo>;
 
+export function SetLanguage(arg1:string):Promise<void>;
+
 export function SetName(arg1:string):Promise<void>;
 
 export function SetOption(arg1:string,arg2:boolean):Promise<void>;

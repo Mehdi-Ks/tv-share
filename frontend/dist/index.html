@@ -86,7 +86,7 @@
       <p class="muted">Your TV will see this folder and everything inside it. Nothing else on your PC.</p>
       <div class="pick">
         <div class="pick-text">
-          <span id="wFolder" class="path"></span>
+          <span id="wFolder" class="path" data-no-tr></span>
           <small id="wCount" class="muted"></small>
         </div>
         <button type="button" id="wChoose" class="btn btn-ghost">Choose another folder</button>
@@ -175,9 +175,9 @@
     <div class="detail-body">
       <div id="detailPoster" class="poster detail-poster"></div>
       <div>
-        <h2 id="detailTitle" class="display"></h2>
-        <div class="facts-row"><span id="dYear"></span><span id="dRuntime"></span><span id="dRating"></span><span id="dGenres"></span><span id="dVideo"></span><span id="dSize"></span></div>
-        <p id="dOverview" class="overview hidden"></p>
+        <h2 id="detailTitle" class="display" data-no-tr></h2>
+        <div class="facts-row"><span id="dYear"></span><span id="dRuntime"></span><span id="dRating"></span><span id="dGenres" data-no-tr></span><span id="dVideo"></span><span id="dSize"></span></div>
+        <p id="dOverview" class="overview hidden" data-no-tr></p>
         <p id="dSource" class="source hidden"></p>
         <section class="detail-section">
           <h3>Subtitles</h3>
@@ -242,7 +242,7 @@
       <h3 class="dialog-sub">Your share</h3>
       <dl class="facts">
         <div><dt>Name on the TV</dt><dd><span class="tv-name"></span><button type="button" id="nameBtn" class="link-btn">Rename</button></dd></div>
-        <div><dt>Movie folder</dt><dd><span id="folderPath" class="path"></span><button type="button" id="folderBtn" class="link-btn">Change</button></dd></div>
+        <div><dt>Movie folder</dt><dd><span id="folderPath" class="path" data-no-tr></span><button type="button" id="folderBtn" class="link-btn">Change</button></dd></div>
         <div><dt>Network</dt><dd id="netText">Checking…</dd></div>
       </dl>
       <h3 class="dialog-sub">Posters and movie info</h3>
@@ -255,6 +255,12 @@
       <label class="row-toggle"><span><strong>Start sharing when the app opens</strong><small>Saves a click every time.</small></span><input type="checkbox" id="optAutoStart" class="switch"></label>
       <label class="row-toggle"><span><strong>Open with Windows</strong><small>Starts quietly in the background when you sign in.</small></span><input type="checkbox" id="optLogin" class="switch"></label>
       <label class="row-toggle"><span><strong>Move the original to the Recycle Bin</strong><small>After subtitles are added and the new file checks out. Saves disk space.</small></span><input type="checkbox" id="optRecycle" class="switch"></label>
+      <label class="row-select"><span><strong>App language</strong><small>Changes the app's text. Movie titles stay as they are.</small></span>
+        <select id="optUiLang" data-no-tr>
+          <option value="auto">Automatic (Windows)</option>
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+        </select></label>
       <label class="row-select"><span><strong>Preferred subtitle language</strong><small>Picked first when a movie has several.</small></span><select id="optLang"></select></label>
       <p class="muted small" id="versionText"></p>
       <p class="credit"><img src="img/tmdb.svg" alt="TMDB" width="92" height="12"><span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span></p>
@@ -276,6 +282,7 @@
 
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

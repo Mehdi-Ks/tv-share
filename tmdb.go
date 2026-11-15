@@ -65,8 +65,18 @@ type TMDBCandidate struct {
 }
 
 type tmdbClient struct {
-	key string
-	mu  sync.Mutex // one lookup at a time per title is enough; keeps us polite with TMDB
+	key  string
+	lang string     // TMDB language for plots and genres, e.g. "fr-FR"; "" means English
+	mu   sync.Mutex // one lookup at a time per title is enough; keeps us polite with TMDB
+}
+
+func (c *tmdbClient) language() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.lang == "" {
+		return "en-US"
+	}
+	return c.lang
 }
 
 func (c *tmdbClient) get(path string, q url.Values, out any) error {
@@ -112,7 +122,7 @@ type tmdbSearchResult struct {
 
 func (c *tmdbClient) search(name, year string) (tmdbSearchResult, error) {
 	var r tmdbSearchResult
-	q := url.Values{"query": {name}, "include_adult": {"false"}, "language": {"en-US"}}
+	q := url.Values{"query": {name}, "include_adult": {"false"}, "language": {c.language()}}
 	if year != "" {
 		q.Set("year", year)
 	}
@@ -139,7 +149,7 @@ func (c *tmdbClient) details(id int) (MovieMeta, error) {
 			Name string `json:"name"`
 		} `json:"genres"`
 	}
-	if err := c.get("/movie/"+strconv.Itoa(id), url.Values{"language": {"en-US"}}, &d); err != nil {
+	if err := c.get("/movie/"+strconv.Itoa(id), url.Values{"language": {c.language()}}, &d); err != nil {
 		return MovieMeta{}, err
 	}
 	m := MovieMeta{
@@ -236,19 +246,28 @@ func (t *tmdbMatches) set(title string, id int) error {
 	return os.WriteFile(matchesPath(), b, 0o644)
 }
 
-func readMeta(title string) (MovieMeta, bool) {
+// metaFile is the cache file for a title in one language (plots and genres differ per language).
+func metaFile(title, lang string) string {
+	name := titleKey(title)
+	if lang != "" && lang != "en-US" {
+		name += "-" + lang
+	}
+	return filepath.Join(tmdbCacheDir(), name+".json")
+}
+
+func readMeta(title, lang string) (MovieMeta, bool) {
 	var m MovieMeta
-	b, err := os.ReadFile(filepath.Join(tmdbCacheDir(), titleKey(title)+".json"))
+	b, err := os.ReadFile(metaFile(title, lang))
 	if err != nil || json.Unmarshal(b, &m) != nil {
 		return m, false
 	}
 	return m, time.Since(time.Unix(m.Fetched, 0)) < tmdbMaxAge
 }
 
-func writeMeta(title string, m MovieMeta) {
+func writeMeta(title, lang string, m MovieMeta) {
 	_ = os.MkdirAll(tmdbCacheDir(), 0o755)
 	b, _ := json.Marshal(m)
-	_ = os.WriteFile(filepath.Join(tmdbCacheDir(), titleKey(title)+".json"), b, 0o644)
+	_ = os.WriteFile(metaFile(title, lang), b, 0o644)
 }
 
 // ClearOldTMDBCache removes cached TMDB data and images older than TMDB allows (6 months).
@@ -277,6 +296,14 @@ func (t *TMDB) setKey(k string) {
 	t.client.mu.Unlock()
 }
 
+// setLanguage picks the language for plots and genres ("fr" -> "fr-FR"; anything else is English).
+func (t *TMDB) setLanguage(lang string) {
+	l := map[string]string{"fr": "fr-FR"}[lang]
+	t.client.mu.Lock()
+	t.client.lang = l
+	t.client.mu.Unlock()
+}
+
 func (t *TMDB) hasKey() bool {
 	t.client.mu.Lock()
 	defer t.client.mu.Unlock()
@@ -294,7 +321,7 @@ func (t *TMDB) meta(title string) (MovieMeta, bool, error) {
 	lk.(*sync.Mutex).Lock()
 	defer lk.(*sync.Mutex).Unlock()
 
-	if m, fresh := readMeta(title); fresh && (!chosen || m.ID == id) {
+	if m, fresh := readMeta(title, t.client.language()); fresh && (!chosen || m.ID == id) {
 		return m, m.ID != 0, nil
 	}
 	if !t.hasKey() {
@@ -308,7 +335,7 @@ func (t *TMDB) meta(title string) (MovieMeta, bool, error) {
 		}
 		id = bestMatch(r, name, year)
 		if id == 0 {
-			writeMeta(title, MovieMeta{Fetched: time.Now().Unix()}) // remember "not found" too
+			writeMeta(title, t.client.language(), MovieMeta{Fetched: time.Now().Unix()}) // remember "not found" too
 			return MovieMeta{}, false, nil
 		}
 	}
@@ -317,7 +344,7 @@ func (t *TMDB) meta(title string) (MovieMeta, bool, error) {
 		return MovieMeta{}, false, err
 	}
 	m.Manual = chosen
-	writeMeta(title, m)
+	writeMeta(title, t.client.language(), m)
 	return m, true, nil
 }
 

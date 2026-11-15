@@ -31,7 +31,8 @@ Prefer no install? Download `TVShare.exe` instead and run it from anywhere (a US
 > **"Windows protected your PC"?** The app isn't signed with a paid certificate, so Windows SmartScreen warns about
 > new downloads. Click **More info → Run anyway**. The full source code is here if you want to check it or build it yourself.
 
-Needs Windows 10 or 11, 64-bit.
+Needs Windows 10 or 11, 64-bit. The app is in **English and French** (it follows Windows; change it in Settings).
+*TV Share est disponible en français : l'app suit la langue de Windows.*
 
 ## How to use it
 
@@ -126,11 +127,16 @@ The app ends up in `build/bin/TVShare.exe`. Official posters need a TMDB key: ge
 [themoviedb.org](https://www.themoviedb.org/settings/api) and paste it in the app's Settings, or put it in
 `build/tmdb.key` (one line, never committed) and build with `build.ps1`, which builds it into the app and also
 makes the installer. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.5.0 build/installer/tvshare.nsi`, which writes
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.6.0 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 
 The app icon is drawn by `build/make_icon.py` (Python + Pillow). See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
+
+## Translations
+
+All text is in English in the code; `frontend/dist/i18n.js` swaps in other languages as text reaches the screen.
+To add a language, copy the French block in that file, translate the right-hand side, and add it to `LANGS`.
 
 ## Contributing
 

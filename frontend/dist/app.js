@@ -58,6 +58,7 @@ function coverColors(t) {
 
 // ---------- state ----------
 async function load() {
+  if (window.i18n) { try { await api().SetLanguage(window.i18n.lang); } catch {} }
   state = await api().GetState();
   render();
   if (state.deps.ready && state.settings.setupDone) loadMovies();
@@ -304,7 +305,10 @@ function setBackgroundInert(on) {
   for (const n of [$("main"), $("setup"), $("welcome"), document.querySelector(".topbar")]) n.inert = on;
 }
 $("helpBtn").addEventListener("click", openDrawer);
-$("drawerSettings").addEventListener("click", () => { closeDrawer(); $("settingsBtn").click(); });
+// Delegated: the translated help text replaces this link's element.
+document.addEventListener("click", (e) => {
+  if (e.target.closest && e.target.closest("#drawerSettings")) { closeDrawer(); $("settingsBtn").click(); }
+});
 $("drawerClose").addEventListener("click", closeDrawer);
 $("scrim").addEventListener("click", closeDrawer);
 document.addEventListener("keydown", (e) => {
@@ -405,7 +409,7 @@ async function runMatchSearch() {
       list.append(el("li", {}, el("button", {
         type: "button", class: c.id === cur ? "current" : "",
         onclick: () => chooseMatch(c.id),
-      }, thumb, el("span", {}, el("strong", { text: c.title }), el("small", { text: c.year || "Year unknown" })))));
+      }, thumb, el("span", {}, el("strong", { text: c.title, "data-no-tr": true }), el("small", { text: c.year || "Year unknown" })))));
     }
   } catch (e) {
     list.replaceChildren(el("li", { class: "error", text: errText(e) }));
@@ -422,6 +426,9 @@ async function chooseMatch(id) {
 $("matchGo").addEventListener("click", runMatchSearch);
 $("matchQuery").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); runMatchSearch(); } });
 $("matchFrame").addEventListener("click", () => chooseMatch(-1));
+
+$("optUiLang").value = window.i18n ? window.i18n.choice : "auto";
+$("optUiLang").addEventListener("change", (ev) => window.i18n && window.i18n.set(ev.target.value));
 
 $("optLang").addEventListener("change", async (ev) => {
   await api().SetSubLang(ev.target.value);
@@ -501,7 +508,7 @@ function renderMovies() {
 function posterEl(m) {
   const { name, year } = splitTitle(m.title);
   const poster = el("div", { class: "poster" });
-  const cover = el("div", { class: "cover" }, icon("i-tv", "cover-tv"), document.createTextNode(name), year ? el("small", { text: year }) : null);
+  const cover = el("div", { class: "cover", "data-no-tr": true }, icon("i-tv", "cover-tv"), document.createTextNode(name), year ? el("small", { text: year }) : null);
   cover.style.background = coverColors(m.title);
   poster.append(cover);
   const img = el("img", { alt: "", decoding: "async" });
@@ -532,7 +539,7 @@ function movieCard(m) {
   const card = el("li", {
     class: "card", tabindex: "-1", "data-path": m.path, "data-title": m.title.toLowerCase(), "data-subs": canGetSubs(m) ? "1" : "0",
     "aria-label": `${m.title}, ${gb(m.sizeMB)}, ${statusText}. Press Enter for details.`,
-  }, poster, el("div", { class: "card-title", text: name, title: m.path }), meta);
+  }, poster, el("div", { class: "card-title", text: name, title: m.path, "data-no-tr": true }), meta);
   card.addEventListener("click", () => openDetail(m, card));
   card.addEventListener("keydown", (e) => {
     if (e.target === card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openDetail(m, card); }
