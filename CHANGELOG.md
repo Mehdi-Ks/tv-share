@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4.0 (unreleased)
+## 1.4.0 (2026-11-15)
 
 - **Official posters, plot and rating from TMDB**, if you want them. TV Share asks once (on the first-run screen,
   or with a banner if you already use it): *Use official posters* or *Keep movie frames*. Change it any time in
