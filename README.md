@@ -13,9 +13,12 @@ and no quality loss. It takes about a minute.
 
 ## Download
 
-1. Go to [**Releases**](../../releases/latest) and download `TVShare.exe`.
-2. Double-click it. There is nothing to install.
-3. The first time, click **Install helpers**. TV Share sets up two free tools it needs (see below), using Windows' own installer.
+1. Go to [**Releases**](../../releases/latest) and download **`TVShare-Setup.exe`** (4 MB).
+2. Run it and click **Install**. No admin rights needed. You get a Start menu and desktop shortcut, and it shows
+   up in *Settings → Apps → Installed apps* for uninstalling.
+3. The first time the app opens, click **Install helpers**. TV Share sets up two free tools it needs (see below), using Windows' own installer.
+
+Prefer no install? Download `TVShare.exe` instead and run it from anywhere (a USB stick, Downloads, ...).
 
 > **"Windows protected your PC"?** The app isn't signed with a paid certificate, so Windows SmartScreen warns about
 > new downloads. Click **More info → Run anyway**. The full source code is here if you want to check it or build it yourself.
@@ -61,7 +64,8 @@ PlayStation media players, and many TVs' built-in media apps.
 - Sharing only happens while the app is open and **Start sharing** is on. It works on your local network only,
   with nothing sent to the internet.
 - The only downloads are the two helpers below, from Windows' official package manager (winget).
-- Settings are stored in `%APPDATA%\TV Share\settings.json`. To remove the app, delete `TVShare.exe` and that folder.
+- Settings are stored in `%APPDATA%\TV Share\settings.json`. To remove the app, uninstall it from *Installed apps*
+  (or delete `TVShare.exe` if you used the portable version), then delete that folder if you want your settings gone too.
 
 ## What's under the hood
 
@@ -86,7 +90,9 @@ go test ./...
 wails build -clean -trimpath
 ```
 
-The app ends up in `build/bin/TVShare.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
+The app ends up in `build/bin/TVShare.exe`. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.0.0 build/installer/tvshare.nsi`, which writes
+`build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 
 ## License
