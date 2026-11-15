@@ -12,3 +12,6 @@ desktop.ini
 *.mkv
 *.avi
 *.srt
+
+# Local tooling
+graphify-out/
