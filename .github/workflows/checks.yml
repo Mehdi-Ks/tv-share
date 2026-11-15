@@ -1,0 +1,58 @@
+# Runs on every pull request and push to main: tests (with FFmpeg, so the
+# subtitle tests run for real) and a full Windows build of the app.
+# Uses no secrets: pull requests from forks never see the TMDB key.
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install FFmpeg (for the subtitle and poster tests)
+        run: choco install ffmpeg -y --no-progress
+        shell: pwsh
+
+      - name: Check formatting
+        run: |
+          $files = gofmt -l .
+          if ($files) { Write-Host "Run gofmt on:`n$files"; exit 1 }
+        shell: pwsh
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Tests
+        run: go test ./...
+
+      - name: Check the page scripts
+        run: |
+          node --check frontend/dist/app.js
+          node --check frontend/dist/i18n.js
+        shell: pwsh
+
+      - name: Build the app
+        run: |
+          $v = (Select-String -Path go.mod -Pattern 'github.com/wailsapp/wails/v2 (v\S+)').Matches[0].Groups[1].Value
+          go install "github.com/wailsapp/wails/v2/cmd/wails@$v"
+          wails build -clean -trimpath
+        shell: pwsh
+
+      - name: Keep the built app for reviewers
+        uses: actions/upload-artifact@v4
+        with:
+          name: TVShare-test-build
+          path: build/bin/TVShare.exe
+          retention-days: 7

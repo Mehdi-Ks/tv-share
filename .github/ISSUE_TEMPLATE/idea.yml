@@ -1,0 +1,16 @@
+name: Idea
+description: Suggest something new (or start a Discussion to talk it through first)
+labels: [idea]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would it help with?
+      description: The situation or annoyance, in your own words.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How you imagine it working. Rough is fine.

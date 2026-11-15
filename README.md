@@ -140,8 +140,8 @@ To add a language, copy the French block in that file, translate the right-hand 
 
 ## Contributing
 
-Bug reports and pull requests are welcome. If something doesn't work on your TV, [open an issue](../../issues) with
-the TV model, the app you play with (VLC, Kodi, ...) and what you see. Please run `go test ./...` before sending a change.
+Bug reports, translations and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up,
+test and send a change. Questions and "my TV doesn't see my PC" go in [Discussions](../../discussions).
 
 ## License
 

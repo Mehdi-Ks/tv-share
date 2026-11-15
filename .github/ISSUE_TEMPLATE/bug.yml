@@ -1,0 +1,37 @@
+name: Something doesn't work
+description: A bug in TV Share (for questions, use Discussions)
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! First, check [When something doesn't work](https://github.com/Mehdi-Ks/tv-share#when-something-doesnt-work): most TV problems have a quick fix there.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead? Screenshots help.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: TV Share version
+      description: In Settings, at the bottom (for example 1.6.0).
+    validations:
+      required: true
+  - type: input
+    id: tv
+    attributes:
+      label: Your TV and the app you play with
+      description: For example "Samsung QE55, built-in media player" or "Android TV, VLC".
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows
+      options: [Windows 11, Windows 10, Other]
+  - type: input
+    id: language
+    attributes:
+      label: Windows language
+      description: For example English, French.
