@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.3.0"
+const appVersion = "1.4.0"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().
@@ -25,15 +25,30 @@ type App struct {
 	extra    []string // movie folders dropped in from outside the shared folder
 	net      NetworkInfo
 	netOnce  sync.Once
+	tmdb     *TMDB
 }
 
 func NewApp() *App {
-	return &App{settings: loadSettings(), share: &Share{}, prep: &Preparer{}}
+	a := &App{settings: loadSettings(), share: &Share{}, prep: &Preparer{}, tmdb: newTMDB()}
+	a.tmdb.setKey(a.tmdbKey())
+	return a
 }
+
+// tmdbKey is the user's own key if they set one, otherwise the one built into this release.
+func (a *App) tmdbKey() string {
+	if k := strings.TrimSpace(a.Settings().TMDBKey); k != "" {
+		return k
+	}
+	return tmdbBuiltInKey
+}
+
+// tmdbOn: the user chose official posters and a key is available.
+func (a *App) tmdbOn() bool { return a.Settings().TMDB == "on" && a.tmdb.hasKey() }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	initJob()
+	go clearOldTMDBCache()
 	a.share.onExit = func(msg string) {
 		runtime.EventsEmit(a.ctx, "share:stopped", msg)
 	}
@@ -81,6 +96,13 @@ type State struct {
 	Settings Settings    `json:"settings"`
 	Network  NetworkInfo `json:"network"`
 	Busy     bool        `json:"busy"`
+	TMDB     TMDBState   `json:"tmdb"`
+}
+
+type TMDBState struct {
+	Available bool `json:"available"` // a key is built in or was entered
+	BuiltIn   bool `json:"builtIn"`   // this release has its own key
+	OwnKey    bool `json:"ownKey"`    // the user entered a key
 }
 
 func (a *App) Settings() Settings {
@@ -103,6 +125,11 @@ func (a *App) GetState() State {
 		Settings: a.Settings(),
 		Network:  n,
 		Busy:     a.prep.Busy(),
+		TMDB: TMDBState{
+			Available: a.tmdb.hasKey(),
+			BuiltIn:   tmdbBuiltInKey != "",
+			OwnKey:    strings.TrimSpace(a.Settings().TMDBKey) != "",
+		},
 	}
 }
 
@@ -336,14 +363,81 @@ func (a *App) CancelSubtitles() { a.prep.Cancel() }
 // GetPoster returns a poster image (a frame from the movie) as a data: URL,
 // or an error when no frame can be taken; the page then draws a title cover.
 func (a *App) GetPoster(video string) (string, error) {
+	if a.tmdbOn() {
+		if m, ok, _ := a.tmdb.meta(a.titleOf(video)); ok && m.Poster != "" {
+			if img, err := a.tmdb.image(m.Poster, "w342"); err == nil {
+				return img, nil
+			}
+		}
+	}
 	return posterDataURL(video)
+}
+
+func (a *App) titleOf(video string) string { return movieTitle(video, a.Settings().Folder) }
+
+// GetMovieMeta returns TMDB's plot, genres and rating (ID 0 when off or not found).
+func (a *App) GetMovieMeta(video string) (MovieMeta, error) {
+	if !a.tmdbOn() {
+		return MovieMeta{}, nil
+	}
+	m, ok, err := a.tmdb.meta(a.titleOf(video))
+	if !ok {
+		m = MovieMeta{}
+		if _, chosen := a.tmdb.matches.get(a.titleOf(video)); chosen {
+			m.Manual = true // "use a frame" was chosen for this one
+		}
+	}
+	return m, err
+}
+
+// FindTMDBMatches lists TMDB's best guesses for "Not this movie?". query may be empty.
+func (a *App) FindTMDBMatches(video, query string) ([]TMDBCandidate, error) {
+	return a.tmdb.candidates(a.titleOf(video), query)
+}
+
+// SetTMDBMatch: id > 0 uses that TMDB movie, -1 uses a frame from the movie, 0 goes back to automatic.
+func (a *App) SetTMDBMatch(video string, id int) error {
+	return a.tmdb.matches.set(a.titleOf(video), id)
+}
+
+// SetTMDBChoice records the answer to "Use official posters?".
+func (a *App) SetTMDBChoice(on bool) error {
+	v := "off"
+	if on {
+		v = "on"
+	}
+	return a.updateSettings(func(s *Settings) { s.TMDB = v })
+}
+
+// SetTMDBKey saves the user's own key after checking it with TMDB ("" goes back to the built-in one).
+func (a *App) SetTMDBKey(key string) error {
+	key = strings.TrimSpace(key)
+	if key != "" {
+		if err := checkTMDBKey(key); err != nil {
+			return err
+		}
+	}
+	if err := a.updateSettings(func(s *Settings) { s.TMDBKey = key }); err != nil {
+		return err
+	}
+	a.tmdb.setKey(a.tmdbKey())
+	return nil
 }
 
 // GetMovieInfo returns runtime, picture, audio and subtitle details for the details view.
 func (a *App) GetMovieInfo(video string) (MovieInfo, error) { return movieInfo(video) }
 
 // GetBackdrop returns a wide frame of the movie for the details view.
-func (a *App) GetBackdrop(video string) (string, error) { return backdropDataURL(video) }
+func (a *App) GetBackdrop(video string) (string, error) {
+	if a.tmdbOn() {
+		if m, ok, _ := a.tmdb.meta(a.titleOf(video)); ok && m.Backdrop != "" {
+			if img, err := a.tmdb.image(m.Backdrop, "w1280"); err == nil {
+				return img, nil
+			}
+		}
+	}
+	return backdropDataURL(video)
+}
 
 // ---- Small helpers for the page ----------------------------------------------------------
 

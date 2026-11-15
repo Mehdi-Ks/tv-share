@@ -92,6 +92,16 @@ function render() {
   $("netText").textContent = parts.length ? parts.join(" · ") : "Checking…";
   $("netWarn").classList.toggle("hidden", !ready || n.category !== "Public");
 
+  const t = s.tmdb || {};
+  $("tmdbAsk").classList.toggle("hidden", !(ready && t.available && !s.settings.tmdb));
+  $("optTMDB").checked = s.settings.tmdb === "on";
+  $("optTMDB").disabled = !t.available;
+  $("keyNote").textContent = t.ownKey
+    ? "Using your own key. Empty the box and press Save to go back to the app's key."
+    : t.builtIn
+      ? "Optional. This app already has one; use yours if you prefer."
+      : "Needed for official posters. Get a free key at themoviedb.org (Settings, API).";
+  $("keyInput").placeholder = t.ownKey ? "Your key is saved" : "Paste a key";
   $("optAutoStart").checked = s.settings.autoStartShare;
   $("optLogin").checked = s.settings.launchAtLogin;
   $("optRecycle").checked = s.settings.recycleOriginal;
@@ -134,6 +144,7 @@ let wFolder = "";
 async function showWelcome() {
   wFolder = state.settings.folder;
   $("wName").value = state.settings.name;
+  $("wPosters").classList.toggle("hidden", !(state.tmdb && state.tmdb.available));
   await updateWelcomeFolder();
 }
 async function updateWelcomeFolder() {
@@ -157,6 +168,11 @@ $("welcomeForm").addEventListener("submit", async (e) => {
   $("wError").classList.add("hidden");
   $("wDone").disabled = true;
   try {
+    const posterChoice = document.querySelector('input[name="wPoster"]:checked');
+    if (!$("wPosters").classList.contains("hidden")) {
+      if (!posterChoice) throw new Error("Choose how your posters should look.");
+      await api().SetTMDBChoice(posterChoice.value === "on");
+    }
     await api().FinishSetup(wFolder, $("wName").value);
     await load();
     toast("All set. Turn on Share with TV to show your movies on the TV.");
@@ -303,6 +319,92 @@ for (const [id, key] of [["optAutoStart", "autoStartShare"], ["optLogin", "launc
     }
   });
 }
+// ---------- official posters (TMDB) ----------
+const tmdbOn = () => state && state.settings.tmdb === "on" && state.tmdb && state.tmdb.available;
+const metaCache = new Map();
+
+async function setTMDB(on) {
+  try {
+    await api().SetTMDBChoice(on);
+    state = await api().GetState();
+    render();
+    resetArt();
+  } catch (e) { toast(errText(e), true); }
+}
+$("tmdbYes").addEventListener("click", () => setTMDB(true));
+$("tmdbNo").addEventListener("click", () => setTMDB(false));
+$("optTMDB").addEventListener("change", (e) => setTMDB(e.target.checked));
+$("keySave").addEventListener("click", async () => {
+  const btn = $("keySave");
+  btn.disabled = true;
+  try {
+    const key = $("keyInput").value.trim();
+    await api().SetTMDBKey(key);
+    $("keyInput").value = "";
+    toast(key ? "Key saved. TMDB accepted it." : "Back to the app's own key.");
+    state = await api().GetState();
+    render();
+    resetArt();
+  } catch (e) { toast(errText(e), true); }
+  finally { btn.disabled = false; }
+});
+
+// Posters, backdrops and info all change when TMDB is turned on or off: start over.
+function resetArt() {
+  posters.clear(); backdrops.clear(); metaCache.clear();
+  renderMovies();
+}
+// One movie's match changed: refresh just that one.
+function resetOne(path) {
+  posters.delete(path); backdrops.delete(path); metaCache.delete(path);
+  api().GetPoster(path).then((url) => {
+    posters.set(path, url);
+    document.querySelectorAll(`[data-path="${CSS.escape(path)}"] .poster img, #detailPoster[data-path="${CSS.escape(path)}"] img`)
+      .forEach((img) => { img.classList.remove("loaded"); img.src = url; });
+  }).catch(() => posters.set(path, ""));
+  if (detailMovie && detailMovie.path === path) fillDetail(detailMovie, true);
+}
+
+// ---------- "Not this movie?" ----------
+let matchFor = null;
+async function openMatch(m) {
+  matchFor = m;
+  const { name, year } = splitTitle(m.title);
+  $("matchQuery").value = year ? `${name} (${year})` : name;
+  $("matchDlg").showModal();
+  await runMatchSearch();
+}
+async function runMatchSearch() {
+  const list = $("matchList");
+  list.replaceChildren(el("li", { class: "muted small", text: "Searching TMDB…" }));
+  try {
+    const found = await api().FindTMDBMatches(matchFor.path, $("matchQuery").value);
+    const cur = (metaCache.get(matchFor.path) || {}).id;
+    list.replaceChildren();
+    if (!found.length) list.append(el("li", { class: "muted small", text: "Nothing found. Try another spelling, or leave out the year." }));
+    for (const c of found) {
+      const thumb = c.poster ? el("img", { src: c.poster, alt: "" }) : el("span", { class: "thumb" });
+      list.append(el("li", {}, el("button", {
+        type: "button", class: c.id === cur ? "current" : "",
+        onclick: () => chooseMatch(c.id),
+      }, thumb, el("span", {}, el("strong", { text: c.title }), el("small", { text: c.year || "Year unknown" })))));
+    }
+  } catch (e) {
+    list.replaceChildren(el("li", { class: "error", text: errText(e) }));
+  }
+}
+async function chooseMatch(id) {
+  const m = matchFor;
+  $("matchDlg").close();
+  try {
+    await api().SetTMDBMatch(m.path, id);
+    resetOne(m.path);
+  } catch (e) { toast(errText(e), true); }
+}
+$("matchGo").addEventListener("click", runMatchSearch);
+$("matchQuery").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); runMatchSearch(); } });
+$("matchFrame").addEventListener("click", () => chooseMatch(-1));
+
 $("optLang").addEventListener("change", async (ev) => {
   await api().SetSubLang(ev.target.value);
   state.settings.subLang = ev.target.value;
@@ -519,10 +621,38 @@ $("detailBack").addEventListener("click", closeDetail);
 $("detail").addEventListener("cancel", (e) => { e.preventDefault(); closeDetail(); });
 $("dShow").addEventListener("click", () => detailMovie && api().ShowInFolder(detailMovie.path));
 
+function fillMeta(m) {
+  if (!tmdbOn()) return;
+  const show = (meta) => {
+    if (!detailMovie || detailMovie.path !== m.path) return;
+    const src = $("dSource");
+    src.replaceChildren();
+    src.classList.remove("hidden");
+    const link = (text, fn) => el("button", { type: "button", class: "link-inline", text, onclick: fn });
+    if (meta.id) {
+      $("dRating").textContent = meta.votes >= 10 && meta.rating ? `Rated ${meta.rating.toFixed(1)}` : "";
+      $("dRating").title = meta.votes ? `TMDB rating from ${meta.votes} votes` : "";
+      $("dGenres").textContent = (meta.genres || []).slice(0, 3).join(", ");
+      $("dOverview").textContent = meta.overview || "";
+      $("dOverview").classList.toggle("hidden", !meta.overview);
+      src.append(document.createTextNode(meta.manual ? "Poster and info from TMDB (your pick). " : "Poster and info from TMDB. "),
+        link("Not this movie?", () => openMatch(m)));
+    } else if (meta.manual) {
+      src.append(document.createTextNode("Using a frame from the movie. "),
+        link("Look it up on TMDB again", async () => { await api().SetTMDBMatch(m.path, 0); resetOne(m.path); }));
+    } else {
+      src.append(document.createTextNode("Not found on TMDB. "), link("Find it", () => openMatch(m)));
+    }
+  };
+  if (metaCache.has(m.path)) { show(metaCache.get(m.path)); return; }
+  api().GetMovieMeta(m.path).then((meta) => { metaCache.set(m.path, meta); show(meta); })
+    .catch(() => { /* offline: the frame poster and file details still show */ });
+}
+
 const fmtRuntime = (min) => (min >= 60 ? `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")} min` : `${min} min`);
 
-function fillDetail(m) {
-  const same = detailMovie && detailMovie.path === m.path;
+function fillDetail(m, force = false) {
+  const same = !force && detailMovie && detailMovie.path === m.path;
   detailMovie = m;
   const { name, year } = splitTitle(m.title);
   $("detailTitle").textContent = name;
@@ -539,7 +669,12 @@ function fillDetail(m) {
     $("dAudio").textContent = "Reading the file…";
     $("detailBg").classList.remove("loaded");
     $("detailBg").style.backgroundImage = "";
+    $("dRating").textContent = "";
+    $("dGenres").textContent = "";
+    $("dOverview").classList.add("hidden");
+    $("dSource").classList.add("hidden");
   }
+  fillMeta(m);
   renderDetailSubs(m);
   $("dTv").textContent = m.outside
     ? "This file is outside your shared folder, so the TV can't see it. Move it into the shared folder to watch it."

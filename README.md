@@ -6,7 +6,7 @@
 
 TV Share makes a folder on your PC (your *Videos* folder by default) show up on your TV, over your home Wi-Fi.
 Open VLC on the TV, pick your PC, and play. On the PC, your movies appear as a dark, cinematic wall of posters.
-Each poster is a frame taken from the movie itself (the screenshot above shows the title covers used when there's no frame yet).
+Posters are either official ones from [TMDB](https://www.themoviedb.org) (you choose, see *Privacy* below) or a frame taken from the movie itself (the screenshot above shows the title covers used while posters load).
 Sort by *Recently added*, *A to Z* or size, and click a poster for its details: runtime, picture quality, sound
 tracks and subtitles, over a wide frame from the film.
 
@@ -79,8 +79,10 @@ PlayStation media players, and many TVs' built-in media apps.
 - Sharing only happens while the app is open and **Share with TV** is on. It works on your local network only,
   with nothing sent to the internet.
 - The only downloads are the two helpers below, from Windows' official package manager (winget).
-- Posters are made on your PC from a frame of each movie and cached in `%LOCALAPPDATA%\TV Share\posters`
-  (about 16 KB each). No titles are looked up online.
+- **Posters are your choice.** *Movie frames*: made on your PC from a frame of each movie, nothing looked up online.
+  *Official posters*: each movie's title and year are sent to TMDB to fetch its poster, plot and rating; nothing
+  else is sent. You choose on first run and can change it in Settings. Both are cached in
+  `%LOCALAPPDATA%\TV Share` (TMDB data is refreshed every 3 months).
 - Settings are stored in `%APPDATA%\TV Share\settings.json`. To remove the app, uninstall it from *Installed apps*
   (or delete `TVShare.exe` if you used the portable version), then delete that folder if you want your settings gone too.
 
@@ -98,6 +100,13 @@ The look uses fonts that ship with Windows (Bahnschrift and Segoe UI), so nothin
 Both are installed with winget (`Rclone.Rclone`, `Gyan.FFmpeg`). If you'd rather not use winget, put `rclone.exe`,
 `ffmpeg.exe` and `ffprobe.exe` next to `TVShare.exe` and the app will use them.
 
+## Credits
+
+Movie posters and information come from [TMDB](https://www.themoviedb.org).
+This product uses the TMDB API but is not endorsed or certified by TMDB.
+
+<img src="frontend/dist/img/tmdb.svg" alt="TMDB logo" height="14">
+
 ## Build it yourself
 
 You need [Go](https://go.dev) (version in `go.mod`) and the Wails CLI:
@@ -110,8 +119,11 @@ go test ./...
 wails build -clean -trimpath
 ```
 
-The app ends up in `build/bin/TVShare.exe`. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.3.0 build/installer/tvshare.nsi`, which writes
+The app ends up in `build/bin/TVShare.exe`. Official posters need a TMDB key: get a free one at
+[themoviedb.org](https://www.themoviedb.org/settings/api) and paste it in the app's Settings, or put it in
+`build/tmdb.key` (one line, never committed) and build with `build.ps1`, which builds it into the app and also
+makes the installer. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.4.0 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 

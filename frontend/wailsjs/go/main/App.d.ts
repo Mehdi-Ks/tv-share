@@ -10,11 +10,15 @@ export function ChooseFolder():Promise<string>;
 
 export function CountMovies(arg1:string):Promise<number>;
 
+export function FindTMDBMatches(arg1:string,arg2:string):Promise<Array<main.TMDBCandidate>>;
+
 export function FinishSetup(arg1:string,arg2:string):Promise<void>;
 
 export function GetBackdrop(arg1:string):Promise<string>;
 
 export function GetMovieInfo(arg1:string):Promise<main.MovieInfo>;
+
+export function GetMovieMeta(arg1:string):Promise<main.MovieMeta>;
 
 export function GetPoster(arg1:string):Promise<string>;
 
@@ -41,6 +45,12 @@ export function SetName(arg1:string):Promise<void>;
 export function SetOption(arg1:string,arg2:boolean):Promise<void>;
 
 export function SetSubLang(arg1:string):Promise<void>;
+
+export function SetTMDBChoice(arg1:boolean):Promise<void>;
+
+export function SetTMDBKey(arg1:string):Promise<void>;
+
+export function SetTMDBMatch(arg1:string,arg2:number):Promise<void>;
 
 export function Settings():Promise<main.Settings>;
 

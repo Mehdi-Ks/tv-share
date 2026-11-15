@@ -53,6 +53,13 @@
     <button id="netBtn" class="link-btn">Open network settings</button>
   </div>
   <div id="shareError" class="banner banner-error hidden" role="alert"></div>
+  <div id="tmdbAsk" class="banner banner-ask hidden" role="region" aria-label="Official posters">
+    <span><strong>New: official movie posters.</strong> TV Share can look your movies up on TMDB for posters, plot and rating. Only titles and years are sent.</span>
+    <span class="banner-actions">
+      <button id="tmdbYes" class="btn btn-primary">Use official posters</button>
+      <button id="tmdbNo" class="btn btn-ghost">Keep movie frames</button>
+    </span>
+  </div>
 
   <!-- First launch -->
   <section id="setup" class="setup hidden">
@@ -88,6 +95,14 @@
         <small class="muted">You'll pick this name on the TV, so make it easy to spot.</small>
         <input id="wName" class="input" maxlength="40" autocomplete="off" spellcheck="false" required>
       </label>
+      <fieldset id="wPosters" class="field choice hidden">
+        <legend><strong>Posters</strong></legend>
+        <small class="muted">You can change this any time in Settings.</small>
+        <div class="choice-row">
+          <label class="choice-card"><input type="radio" name="wPoster" value="on"><span><strong>Official posters</strong><small>Plus plot and rating. Looks each title up on TMDB (only the title and year are sent).</small></span></label>
+          <label class="choice-card"><input type="radio" name="wPoster" value="off"><span><strong>Movie frames</strong><small>A frame from each movie. Nothing is looked up online.</small></span></label>
+        </div>
+      </fieldset>
       <button id="wDone" class="btn btn-primary btn-lg" type="submit">Continue</button>
       <p id="wError" class="error hidden" role="alert"></p>
     </form>
@@ -160,7 +175,9 @@
       <div id="detailPoster" class="poster detail-poster"></div>
       <div>
         <h2 id="detailTitle" class="display"></h2>
-        <div class="facts-row"><span id="dYear"></span><span id="dRuntime"></span><span id="dVideo"></span><span id="dSize"></span></div>
+        <div class="facts-row"><span id="dYear"></span><span id="dRuntime"></span><span id="dRating"></span><span id="dGenres"></span><span id="dVideo"></span><span id="dSize"></span></div>
+        <p id="dOverview" class="overview hidden"></p>
+        <p id="dSource" class="source hidden"></p>
         <section class="detail-section">
           <h3>Subtitles</h3>
           <div id="dSubs"></div>
@@ -180,6 +197,25 @@
     </div>
   </dialog>
 
+  <!-- "Not this movie?" -->
+  <dialog id="matchDlg" class="dialog">
+    <form id="matchForm" method="dialog">
+      <div class="dialog-head">
+        <h2 class="display">Which movie is it?</h2>
+        <button class="icon-btn" value="cancel" formnovalidate aria-label="Close" title="Close (Esc)"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="match-search">
+        <input id="matchQuery" class="input" autocomplete="off" spellcheck="false" aria-label="Search TMDB by title">
+        <button type="button" id="matchGo" class="btn btn-ghost"><svg aria-hidden="true"><use href="#i-search"/></svg>Search</button>
+      </div>
+      <ul id="matchList" class="match-list" aria-live="polite"></ul>
+      <div class="dialog-actions match-actions">
+        <button type="button" id="matchFrame" class="btn btn-ghost">Use a frame from the movie instead</button>
+      </div>
+      <p class="credit"><img src="img/tmdb.svg" alt="TMDB" width="92" height="12"><span>Results from TMDB.</span></p>
+    </form>
+  </dialog>
+
   <div id="dropOverlay" class="drop-overlay hidden"><div>Drop to add this movie</div></div>
 
   <!-- Settings -->
@@ -195,12 +231,19 @@
         <div><dt>Movie folder</dt><dd><span id="folderPath" class="path"></span><button type="button" id="folderBtn" class="link-btn">Change</button></dd></div>
         <div><dt>Network</dt><dd id="netText">Checking…</dd></div>
       </dl>
+      <h3 class="dialog-sub">Posters and movie info</h3>
+      <label class="row-toggle"><span><strong>Official posters from TMDB</strong><small id="tmdbNote">Posters, plot and rating from TMDB. Only movie titles and years are sent. Off: a frame from each movie, nothing online.</small></span><input type="checkbox" id="optTMDB" class="switch"></label>
+      <div class="row-key">
+        <span><strong>Your own TMDB key</strong><small id="keyNote">Optional. This app already has one; use yours if you prefer.</small></span>
+        <span class="key-input"><input id="keyInput" class="input" type="password" autocomplete="off" spellcheck="false" placeholder="Paste a key" aria-label="Your own TMDB key"><button type="button" id="keySave" class="btn btn-ghost">Save</button></span>
+      </div>
       <h3 class="dialog-sub">Options</h3>
       <label class="row-toggle"><span><strong>Start sharing when the app opens</strong><small>Saves a click every time.</small></span><input type="checkbox" id="optAutoStart" class="switch"></label>
       <label class="row-toggle"><span><strong>Open with Windows</strong><small>Starts quietly in the background when you sign in.</small></span><input type="checkbox" id="optLogin" class="switch"></label>
       <label class="row-toggle"><span><strong>Move the original to the Recycle Bin</strong><small>After subtitles are added and the new file checks out. Saves disk space.</small></span><input type="checkbox" id="optRecycle" class="switch"></label>
       <label class="row-select"><span><strong>Preferred subtitle language</strong><small>Picked first when a movie has several.</small></span><select id="optLang"></select></label>
       <p class="muted small" id="versionText"></p>
+      <p class="credit"><img src="img/tmdb.svg" alt="TMDB" width="92" height="12"><span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span></p>
       <div class="dialog-actions"><button class="btn btn-primary" value="close">Done</button></div>
     </form>
   </dialog>

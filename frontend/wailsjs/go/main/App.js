@@ -18,6 +18,10 @@ export function CountMovies(arg1) {
   return window['go']['main']['App']['CountMovies'](arg1);
 }
 
+export function FindTMDBMatches(arg1, arg2) {
+  return window['go']['main']['App']['FindTMDBMatches'](arg1, arg2);
+}
+
 export function FinishSetup(arg1, arg2) {
   return window['go']['main']['App']['FinishSetup'](arg1, arg2);
 }
@@ -28,6 +32,10 @@ export function GetBackdrop(arg1) {
 
 export function GetMovieInfo(arg1) {
   return window['go']['main']['App']['GetMovieInfo'](arg1);
+}
+
+export function GetMovieMeta(arg1) {
+  return window['go']['main']['App']['GetMovieMeta'](arg1);
 }
 
 export function GetPoster(arg1) {
@@ -80,6 +88,18 @@ export function SetOption(arg1, arg2) {
 
 export function SetSubLang(arg1) {
   return window['go']['main']['App']['SetSubLang'](arg1);
+}
+
+export function SetTMDBChoice(arg1) {
+  return window['go']['main']['App']['SetTMDBChoice'](arg1);
+}
+
+export function SetTMDBKey(arg1) {
+  return window['go']['main']['App']['SetTMDBKey'](arg1);
+}
+
+export function SetTMDBMatch(arg1, arg2) {
+  return window['go']['main']['App']['SetTMDBMatch'](arg1, arg2);
 }
 
 export function Settings() {

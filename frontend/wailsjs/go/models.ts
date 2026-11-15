@@ -102,6 +102,40 @@ export namespace main {
 	        this.subtitles = source["subtitles"];
 	    }
 	}
+	export class MovieMeta {
+	    id: number;
+	    title: string;
+	    year: string;
+	    overview: string;
+	    genres: string[];
+	    rating: number;
+	    votes: number;
+	    url: string;
+	    posterPath: string;
+	    backdropPath: string;
+	    fetched: number;
+	    manual: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new MovieMeta(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.year = source["year"];
+	        this.overview = source["overview"];
+	        this.genres = source["genres"];
+	        this.rating = source["rating"];
+	        this.votes = source["votes"];
+	        this.url = source["url"];
+	        this.posterPath = source["posterPath"];
+	        this.backdropPath = source["backdropPath"];
+	        this.fetched = source["fetched"];
+	        this.manual = source["manual"];
+	    }
+	}
 	export class NetworkInfo {
 	    name: string;
 	    category: string;
@@ -141,6 +175,8 @@ export namespace main {
 	    recycleOriginal: boolean;
 	    subLang: string;
 	    setupDone: boolean;
+	    tmdb: string;
+	    tmdbKey: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -156,6 +192,24 @@ export namespace main {
 	        this.recycleOriginal = source["recycleOriginal"];
 	        this.subLang = source["subLang"];
 	        this.setupDone = source["setupDone"];
+	        this.tmdb = source["tmdb"];
+	        this.tmdbKey = source["tmdbKey"];
+	    }
+	}
+	export class TMDBState {
+	    available: boolean;
+	    builtIn: boolean;
+	    ownKey: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new TMDBState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.available = source["available"];
+	        this.builtIn = source["builtIn"];
+	        this.ownKey = source["ownKey"];
 	    }
 	}
 	export class State {
@@ -165,6 +219,7 @@ export namespace main {
 	    settings: Settings;
 	    network: NetworkInfo;
 	    busy: boolean;
+	    tmdb: TMDBState;
 	
 	    static createFrom(source: any = {}) {
 	        return new State(source);
@@ -178,6 +233,7 @@ export namespace main {
 	        this.settings = this.convertValues(source["settings"], Settings);
 	        this.network = this.convertValues(source["network"], NetworkInfo);
 	        this.busy = source["busy"];
+	        this.tmdb = this.convertValues(source["tmdb"], TMDBState);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -197,6 +253,25 @@ export namespace main {
 		    }
 		    return a;
 		}
+	}
+	
+	export class TMDBCandidate {
+	    id: number;
+	    title: string;
+	    year: string;
+	    poster: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TMDBCandidate(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.year = source["year"];
+	        this.poster = source["poster"];
+	    }
 	}
 
 }

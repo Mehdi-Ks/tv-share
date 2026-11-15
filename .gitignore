@@ -15,3 +15,9 @@ desktop.ini
 
 # Local tooling
 graphify-out/
+
+# TMDB key for release builds (see build.ps1). Never commit it.
+build/tmdb.key
+
+# Stray binaries from "go build" at the repo root
+/*.exe

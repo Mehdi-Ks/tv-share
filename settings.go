@@ -19,6 +19,8 @@ type Settings struct {
 	RecycleOriginal bool   `json:"recycleOriginal"`
 	SubLang         string `json:"subLang"`
 	SetupDone       bool   `json:"setupDone"` // the first-run "Where are your movies?" screen was completed
+	TMDB            string `json:"tmdb"`      // official posters: "" = not asked yet, "on", "off"
+	TMDBKey         string `json:"tmdbKey"`   // the user's own TMDB key (optional; release builds have one)
 }
 
 func defaultSettings() Settings {

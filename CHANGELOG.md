@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.4.0 (unreleased)
+
+- **Official posters, plot and rating from TMDB**, if you want them. TV Share asks once (on the first-run screen,
+  or with a banner if you already use it): *Use official posters* or *Keep movie frames*. Change it any time in
+  Settings. Only each movie's title and year are sent to TMDB; nothing else leaves your PC.
+- The movie page shows TMDB's plot, genres and rating, over TMDB's wide backdrop.
+- **Not this movie?** If TMDB picked the wrong film, choose the right one from its top results (or search
+  another title). TV Share remembers your pick. You can also use a frame from the movie instead, for films TMDB
+  doesn't know, like home videos.
+- Release builds include a TMDB key, so there is nothing to set up. You can use your own key in Settings instead.
+- TMDB data and images are cached on your PC and refreshed every 3 months (TMDB allows 6 at most).
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
+
 ## 1.3.0 (2026-11-15)
 
 - **First-run screen: "Where are your movies?"** After the helpers install, pick the folder your TV will see
