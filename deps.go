@@ -29,7 +29,7 @@ var (
 func (t tool) find() string {
 	// 1. Next to the app (lets people drop the .exe files in by hand)
 	if exe, err := os.Executable(); err == nil {
-		for _, dir := range []string{filepath.Dir(exe), filepath.Join(filepath.Dir(exe), "tools")} {
+		for _, dir := range []string{filepath.Dir(exe), filepath.Join(filepath.Dir(exe), "tools"), toolsDir()} {
 			p := filepath.Join(dir, t.exe)
 			if fileExists(p) {
 				return p
@@ -88,6 +88,8 @@ func depsStatus() DepsStatus {
 	return s
 }
 
+var errNoWinget = fmt.Errorf("winget is not available")
+
 // installTool runs winget for one package, reporting each output line.
 func installTool(t tool, report func(string)) error {
 	if t.find() != "" {
@@ -95,7 +97,7 @@ func installTool(t tool, report func(string)) error {
 	}
 	winget, err := exec.LookPath("winget.exe")
 	if err != nil {
-		return fmt.Errorf("Windows Package Manager (winget) is missing. Install \"App Installer\" from the Microsoft Store, then try again.")
+		return errNoWinget
 	}
 	cmd := hiddenCmd(winget, "install", "--id", t.wingetID, "-e", "--silent",
 		"--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity")

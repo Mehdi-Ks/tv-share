@@ -66,7 +66,7 @@
     <div class="setup-card">
       <svg class="setup-icon" aria-hidden="true"><use href="#i-tv"/></svg>
       <h1 class="display">Movie night,<br>on your TV.</h1>
-      <p class="muted">One-time setup: TV Share needs two free, open-source helpers. Windows' own installer adds them in a minute or two.</p>
+      <p class="muted">One-time setup: TV Share needs two free, open-source helpers. It gets them from their official sites (about 150 MB). Allow a few minutes on a slow connection.</p>
       <ul class="helper-list">
         <li><span id="depRclone" class="check"></span><div><strong>rclone</strong><small>Shows your movie folder to the TV</small></div></li>
         <li><span id="depFfmpeg" class="check"></span><div><strong>FFmpeg</strong><small>Posters, and subtitles the TV can show</small></div></li>
@@ -74,6 +74,7 @@
       <button id="installBtn" class="btn btn-primary btn-lg">Install helpers</button>
       <p id="setupLog" class="setup-log" aria-live="polite"></p>
       <p id="setupError" class="error hidden"></p>
+      <button id="storeBtn" class="link-btn hidden" style="margin-left:0">Or get "App Installer" from the Microsoft Store, then try again</button>
     </div>
   </section>
 
@@ -195,6 +196,19 @@
         </div>
       </div>
     </div>
+  </dialog>
+
+  <!-- Before the very first share: Windows Firewall will ask about rclone -->
+  <dialog id="fwDlg" class="dialog dialog-sm">
+    <form method="dialog">
+      <h2 class="display">One question from Windows</h2>
+      <p class="muted">The first time, Windows asks whether <strong>Rclone</strong> may use the network. Rclone is the helper TV Share uses to show your movies to the TV.</p>
+      <p class="fw-do">Click <strong>Allow</strong> (in French: <strong>Autoriser</strong>). Otherwise your TV can't see this PC.</p>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" value="cancel" formnovalidate>Not now</button>
+        <button class="btn btn-primary" value="go">Got it, start sharing</button>
+      </div>
+    </form>
   </dialog>
 
   <!-- "Not this movie?" -->

@@ -303,7 +303,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #4a4a4a; flex: none; display: grid; place-items: center; }
 .check.done { background: var(--ok); border-color: var(--ok); }
 .check.done::after { content: ""; width: 9px; height: 5px; border: 2px solid #102a19; border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px); }
-.check.busy { border-color: var(--accent); border-top-color: transparent; animation: spin .8s linear infinite; }
+.check.spinning { border-color: var(--accent); border-top-color: transparent; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .setup-log { font-size: 12.5px; color: var(--muted); min-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -364,6 +364,7 @@ select { cursor: pointer; }
 .switch:checked::after { transform: translateX(16px); background: var(--on-accent); }
 #versionText { margin-top: 14px; }
 .dialog-sub { font-size: 15px; margin: 18px 0 10px; }
+.fw-do { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); }
 .row-key { display: grid; gap: 8px; padding: 13px 0; border-bottom: 1px solid var(--border); }
 .row-key small { display: block; color: var(--muted); font-size: 12.5px; }
 .key-input { display: flex; gap: 8px; }
@@ -411,5 +412,5 @@ select { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .poster, .drawer, .switch-thumb, .switch::after, .toast, .dialog, .detail-body { transition-property: opacity, background-color, border-color, visibility; }
   .card:hover .poster { transform: none; }
-  .check.busy { animation-duration: 2s; }
+  .check.spinning { animation-duration: 2s; }
 }

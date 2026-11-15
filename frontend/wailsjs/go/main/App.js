@@ -58,6 +58,10 @@ export function ListMovies() {
   return window['go']['main']['App']['ListMovies']();
 }
 
+export function OpenAppInstallerStore() {
+  return window['go']['main']['App']['OpenAppInstallerStore']();
+}
+
 export function OpenFolder(arg1) {
   return window['go']['main']['App']['OpenFolder'](arg1);
 }

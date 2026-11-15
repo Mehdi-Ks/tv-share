@@ -5,7 +5,7 @@ Unicode true
 SetCompressor /SOLID lzma
 
 !ifndef VERSION
-  !define VERSION "1.4.0"
+  !define VERSION "1.5.0"
 !endif
 !define APPNAME "TV Share"
 !define EXE "TVShare.exe"
@@ -34,6 +34,8 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 !define MUI_ICON "..\windows\icon.ico"
 !define MUI_UNICON "..\windows\icon.ico"
 !define MUI_ABORTWARNING
+!define MUI_WELCOMEFINISHPAGE_BITMAP "welcome.bmp"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "welcome.bmp"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${EXE}"
 !define MUI_FINISHPAGE_RUN_TEXT "$(RunNow)"
 

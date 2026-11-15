@@ -21,7 +21,7 @@ and no quality loss. It takes about a minute.
 1. Go to [**Releases**](../../releases/latest) and download **`TVShare-Setup.exe`** (4 MB).
 2. Run it and click **Install**. No admin rights needed. You get a Start menu and desktop shortcut, and it shows
    up in *Settings → Apps → Installed apps* for uninstalling.
-3. The first time the app opens, click **Install helpers**. TV Share sets up two free tools it needs (see below), using Windows' own installer.
+3. The first time the app opens, click **Install helpers**. TV Share sets up two free tools it needs (see below), about 150 MB, from their official sites.
    Then choose the folder with your movies (your *Videos* folder is suggested) and the name you'll pick on the TV.
 
    ![First run: choose your movie folder and the name on the TV](docs/screenshot-welcome.png)
@@ -37,7 +37,7 @@ Needs Windows 10 or 11, 64-bit.
 
 **On the PC**
 1. Open TV Share and turn on **Share with TV** (top right).
-2. If Windows asks whether to allow access on the network, click **Allow**.
+2. The first time, Windows asks whether **Rclone** may use the network (Rclone is the helper that talks to the TV). Click **Allow**.
 3. Keep the app open and the PC awake while you watch.
 
 Keyboard: arrow keys move across the posters, Enter opens a movie, Esc goes back, Ctrl+F searches.
@@ -78,7 +78,8 @@ PlayStation media players, and many TVs' built-in media apps.
 - The TV can **only read** the folder you choose. Nothing on your PC can be changed or deleted from the network.
 - Sharing only happens while the app is open and **Share with TV** is on. It works on your local network only,
   with nothing sent to the internet.
-- The only downloads are the two helpers below, from Windows' official package manager (winget).
+- The only downloads are the two helpers below: from Windows' package manager (winget) when the PC has it,
+  otherwise straight from rclone.org and gyan.dev, checked against the checksums those sites publish.
 - **Posters are your choice.** *Movie frames*: made on your PC from a frame of each movie, nothing looked up online.
   *Official posters*: each movie's title and year are sent to TMDB to fetch its poster, plot and rating; nothing
   else is sent. You choose on first run and can change it in Settings. Both are cached in
@@ -97,7 +98,9 @@ WebView2), so it stays light even on older PCs. It drives two well-known open-so
 
 The look uses fonts that ship with Windows (Bahnschrift and Segoe UI), so nothing is downloaded at runtime.
 
-Both are installed with winget (`Rclone.Rclone`, `Gyan.FFmpeg`). If you'd rather not use winget, put `rclone.exe`,
+Both are installed with winget (`Rclone.Rclone`, `Gyan.FFmpeg`) when it's available; otherwise TV Share downloads
+the official builds itself (rclone's release zip and gyan.dev's FFmpeg "essentials" build), verifies their SHA-256
+checksums and keeps them in `%LOCALAPPDATA%\TV Share\tools`. If you'd rather not use winget, put `rclone.exe`,
 `ffmpeg.exe` and `ffprobe.exe` next to `TVShare.exe` and the app will use them.
 
 ## Credits
@@ -123,7 +126,7 @@ The app ends up in `build/bin/TVShare.exe`. Official posters need a TMDB key: ge
 [themoviedb.org](https://www.themoviedb.org/settings/api) and paste it in the app's Settings, or put it in
 `build/tmdb.key` (one line, never committed) and build with `build.ps1`, which builds it into the app and also
 makes the installer. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.4.0 build/installer/tvshare.nsi`, which writes
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.5.0 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 

@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.4.0"
+const appVersion = "1.5.0"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().
@@ -149,13 +149,33 @@ func (a *App) InstallDeps() (DepsStatus, error) {
 			runtime.EventsEmit(a.ctx, "setup", tool+": "+line)
 		}
 	}
-	if err := installTool(toolRclone, report("rclone")); err != nil {
-		return depsStatus(), err
+	direct := func(pct float64, msg string) { runtime.EventsEmit(a.ctx, "setup", msg) }
+	// winget first (it keeps the helpers up to date); if it's missing or fails,
+	// download them straight from their official sites, checked against their checksums.
+	if err := installTool(toolRclone, report("rclone")); err != nil && toolRclone.find() == "" {
+		if derr := downloadRclone(direct); derr != nil {
+			return depsStatus(), helperError(err, derr)
+		}
 	}
-	if err := installTool(toolFFmpeg, report("FFmpeg")); err != nil {
-		return depsStatus(), err
+	if err := installTool(toolFFmpeg, report("FFmpeg")); err != nil && (toolFFmpeg.find() == "" || toolFFprobe.find() == "") {
+		if derr := downloadFFmpeg(direct); derr != nil {
+			return depsStatus(), helperError(err, derr)
+		}
 	}
 	return depsStatus(), nil
+}
+
+// helperError explains a failed setup in plain words.
+func helperError(wingetErr, downloadErr error) error {
+	if wingetErr == errNoWinget {
+		return fmt.Errorf("Couldn't get the helpers: %v. Check your internet connection and try again", downloadErr)
+	}
+	return fmt.Errorf("Couldn't get the helpers: %v (Windows' installer also failed: %v)", downloadErr, wingetErr)
+}
+
+// OpenAppInstallerStore opens the Microsoft Store page of "App Installer" (it includes winget).
+func (a *App) OpenAppInstallerStore() {
+	runtime.BrowserOpenURL(a.ctx, "ms-windows-store://pdp/?productid=9NBLGGH4NNS1")
 }
 
 // ---- Sharing --------------------------------------------------------------------

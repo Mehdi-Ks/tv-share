@@ -30,6 +30,8 @@ export function Languages():Promise<Array<any>>;
 
 export function ListMovies():Promise<Array<main.Movie>>;
 
+export function OpenAppInstallerStore():Promise<void>;
+
 export function OpenFolder(arg1:string):Promise<void>;
 
 export function OpenNetworkSettings():Promise<void>;

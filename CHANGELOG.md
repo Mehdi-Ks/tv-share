@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.5.0 (2026-11-15)
+
+Found by testing on a brand-new Windows PC (Windows Sandbox):
+
+- **Setup works without winget.** Some PCs don't have Windows' package manager (winget), and setup used to stop
+  there. Now TV Share downloads the two helpers straight from their official sites (rclone.org and gyan.dev),
+  checks each file against the checksum those sites publish, and keeps them in its own folder. winget is still
+  used first when it's there. If the download fails, a button opens App Installer in the Microsoft Store.
+- **A heads-up before the first share**: Windows Firewall asks about "Rclone", a name nobody recognises. TV Share
+  now explains it just before, so people click *Allow* instead of *Cancel*.
+- The installer's first and last pages show TV Share's own picture instead of the generic one.
+- Fixed: the spinners next to "rclone" and "FFmpeg" during setup appeared in the window's corner instead of on
+  their rows (since 1.1.0). The setup time estimate is now honest about slow connections.
+
 ## 1.4.0 (2026-11-15)
 
 - **Official posters, plot and rating from TMDB**, if you want them. TV Share asks once (on the first-run screen,

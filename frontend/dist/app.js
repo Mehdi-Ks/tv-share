@@ -114,13 +114,14 @@ function showShareError(msg) {
 }
 
 // ---------- setup ----------
+$("storeBtn").addEventListener("click", () => api().OpenAppInstallerStore());
 $("installBtn").addEventListener("click", async () => {
   const btn = $("installBtn");
   btn.disabled = true;
   btn.textContent = "Installing…";
   $("setupError").classList.add("hidden");
-  if (!state.deps.rclone) $("depRclone").className = "check busy";
-  if (!state.deps.ffmpeg) $("depFfmpeg").className = "check busy";
+  if (!state.deps.rclone) $("depRclone").className = "check spinning";
+  if (!state.deps.ffmpeg) $("depFfmpeg").className = "check spinning";
   try {
     const deps = await api().InstallDeps();
     state.deps = deps;
@@ -131,6 +132,7 @@ $("installBtn").addEventListener("click", async () => {
   } catch (e) {
     $("setupError").textContent = errText(e);
     $("setupError").classList.remove("hidden");
+    $("storeBtn").classList.remove("hidden");
     state = await api().GetState();
     render();
   } finally {
@@ -185,7 +187,23 @@ $("welcomeForm").addEventListener("submit", async (e) => {
 });
 
 // ---------- sharing ----------
+// The first share makes Windows Firewall ask about "Rclone", a name people don't know.
+// Explain it once, just before it happens.
+function firewallHeadsUp() {
+  if (localStorageGet("seenFirewall")) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const dlg = $("fwDlg");
+    dlg.addEventListener("close", () => {
+      const go = dlg.returnValue === "go";
+      if (go) localStorageSet("seenFirewall", "1");
+      resolve(go);
+    }, { once: true });
+    dlg.showModal();
+  });
+}
+
 $("shareBtn").addEventListener("click", async () => {
+  if (!state.sharing && !(await firewallHeadsUp())) return;
   const btn = $("shareBtn");
   btn.disabled = true;
   showShareError("");
@@ -767,7 +785,10 @@ async function addSubtitles(m, subPath) {
 
 // ---------- events from the app ----------
 function wireEvents() {
-  rt().EventsOn("setup", (line) => { $("setupLog").textContent = line; });
+  rt().EventsOn("setup", (line) => {
+    $("setupLog").textContent = line;
+    if (/ffmpeg/i.test(line) && $("depRclone").classList.contains("spinning")) $("depRclone").className = "check done";
+  });
   rt().EventsOn("network", (n) => { if (state) { state.network = n; render(); } });
   rt().EventsOn("share:started", async () => { state = await api().GetState(); render(); });
   rt().EventsOn("share:stopped", async (msg) => {
