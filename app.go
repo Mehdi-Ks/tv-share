@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.2.0"
+const appVersion = "1.2.1"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().
@@ -289,8 +289,14 @@ func (a *App) AddSubtitles(video, subPath string) (PrepareResult, error) {
 	if sub == nil {
 		return PrepareResult{}, fmt.Errorf("that subtitle file is gone")
 	}
-	return a.prep.Prepare(video, *sub, m.Title, s.RecycleOriginal, func(pct float64) {
-		runtime.EventsEmit(a.ctx, "prepare:progress", map[string]interface{}{"path": video, "percent": pct})
+	lastPct, lastStage := -1, ""
+	return a.prep.Prepare(video, *sub, m.Title, s.RecycleOriginal, func(pct float64, stage string) {
+		// Only tell the page when the number or the step changes: fewer, calmer updates.
+		if int(pct) == lastPct && stage == lastStage {
+			return
+		}
+		lastPct, lastStage = int(pct), stage
+		runtime.EventsEmit(a.ctx, "prepare:progress", map[string]interface{}{"path": video, "percent": pct, "stage": stage})
 	})
 }
 
@@ -314,11 +320,17 @@ func (a *App) OpenFolder(p string) {
 	if p == "" {
 		p = a.Settings().Folder
 	}
+	allowSetForeground.Call(uintptr(asfwAny)) // so the folder opens in front of the app
 	_ = hiddenCmd("explorer.exe", p).Start()
 }
 
+// ShowInFolder opens Explorer with the file selected (or its folder, if the file is gone).
 func (a *App) ShowInFolder(p string) {
-	_ = hiddenCmd("explorer.exe", "/select,", p).Start()
+	if !fileExists(p) {
+		a.OpenFolder(filepath.Dir(p))
+		return
+	}
+	showInExplorer(p)
 }
 
 func (a *App) OpenNetworkSettings() {

@@ -108,7 +108,7 @@ wails build -clean -trimpath
 ```
 
 The app ends up in `build/bin/TVShare.exe`. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.2.0 build/installer/tvshare.nsi`, which writes
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.2.1 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 

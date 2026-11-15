@@ -178,10 +178,12 @@ func backdropDataURL(video string) (string, error) {
 			at = d * 0.15
 		}
 		tmp := out + ".tmp.jpg"
-		err = hiddenCmd(ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
+		bc := hiddenCmd(ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
 			"-ss", strconv.FormatFloat(at, 'f', 2, 64), "-i", video,
 			"-vf", "thumbnail=48,scale=960:540:force_original_aspect_ratio=increase,crop=960:540",
-			"-frames:v", "1", "-q:v", "5", tmp).Run()
+			"-frames:v", "1", "-q:v", "5", tmp)
+		lowPriority(bc)
+		err = bc.Run()
 		if err != nil || !fileExists(tmp) {
 			os.Remove(tmp)
 			return "", fmt.Errorf("could not take a frame from this movie")

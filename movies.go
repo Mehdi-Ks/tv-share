@@ -367,7 +367,7 @@ func (pr *Preparer) Cancel() {
 
 // Prepare copies video + audio unchanged into an MKV with the chosen subtitles inside,
 // checks the result, then (optionally) sends the original to the Recycle Bin.
-func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle bool, progress func(float64)) (PrepareResult, error) {
+func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle bool, progress func(pct float64, stage string)) (PrepareResult, error) {
 	var res PrepareResult
 	ffmpeg, ffprobe := toolFFmpeg.find(), toolFFprobe.find()
 	if ffmpeg == "" || ffprobe == "" {
@@ -432,10 +432,12 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle b
 	stdout, _ := cmd.StdoutPipe()
 	var stderr strings.Builder
 	cmd.Stderr = &stderr
+	lowPriority(cmd) // a big copy shouldn't make the rest of the PC sluggish
 	if err := cmd.Start(); err != nil {
 		return res, err
 	}
 	attachToJob(cmd.Process)
+	progress(0, "Building the subtitles in…")
 	go func() {
 		<-ctx.Done()
 		if cmd.Process != nil {
@@ -448,7 +450,13 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle b
 		line := sc.Text()
 		if strings.HasPrefix(line, "out_time_us=") && duration > 0 {
 			if us, err := strconv.ParseFloat(strings.TrimPrefix(line, "out_time_us="), 64); err == nil {
-				progress(math.Min(99, us/1e6/duration*100))
+				pct := math.Min(99, us/1e6/duration*100)
+				stage := "Building the subtitles in…"
+				if pct >= 90 {
+					// Windows is still writing the last part of the file to disk; this can take a while.
+					stage = "Finishing the file…"
+				}
+				progress(pct, stage)
 			}
 		}
 	}
@@ -465,6 +473,7 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle b
 	}
 
 	// Check: same length and a subtitle track, before touching the original.
+	progress(99, "Checking the new file…")
 	if d := probeDuration(ffprobe, tmp); duration > 0 && math.Abs(d-duration) > 2 {
 		return res, fmt.Errorf("the new file is %.0f s long instead of %.0f s; the original is untouched", d, duration)
 	}
@@ -475,13 +484,14 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle b
 		return res, err
 	}
 	res.Output = out
-	progress(100)
 
 	if recycle {
+		progress(99, "Moving the original to the Recycle Bin…")
 		if err := moveToRecycleBin(video); err == nil {
 			res.Recycled = true
 		}
 	}
+	progress(100, "Done")
 	return res, nil
 }
 

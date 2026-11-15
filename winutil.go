@@ -22,6 +22,26 @@ func hiddenCmd(name string, args ...string) *exec.Cmd {
 	return cmd
 }
 
+var allowSetForeground = windows.NewLazySystemDLL("user32.dll").NewProc("AllowSetForegroundWindow")
+
+const asfwAny = ^uint32(0) // ASFW_ANY
+
+// lowPriority runs a long job (copying a movie, taking frames) below normal priority.
+func lowPriority(cmd *exec.Cmd) {
+	cmd.SysProcAttr.CreationFlags |= 0x00004000 // BELOW_NORMAL_PRIORITY_CLASS
+}
+
+// showInExplorer opens a folder with the file selected. Explorer needs the exact form
+// /select,"C:\pathile" as written; Go's usual argument quoting breaks it for some names.
+func showInExplorer(p string) {
+	// We're the app the user just clicked, so we may hand "come to the front" to Explorer;
+	// without this its window opens behind ours and the click seems to do nothing.
+	allowSetForeground.Call(uintptr(asfwAny))
+	cmd := exec.Command("explorer.exe")
+	cmd.SysProcAttr = &syscall.SysProcAttr{CmdLine: `explorer.exe /select,"` + p + `"`}
+	_ = cmd.Start()
+}
+
 // --- Child processes die with the app, even if it crashes -----------------
 
 var jobHandle windows.Handle

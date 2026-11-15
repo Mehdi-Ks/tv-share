@@ -167,7 +167,10 @@
   <!-- Settings -->
   <dialog id="settingsDlg" class="dialog">
     <form method="dialog">
-      <h2 class="display">Settings</h2>
+      <div class="dialog-head">
+        <h2 class="display">Settings</h2>
+        <button class="icon-btn" value="close" aria-label="Close settings" title="Close (Esc)"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
       <label class="row-toggle"><span><strong>Start sharing when the app opens</strong><small>Saves a click every time.</small></span><input type="checkbox" id="optAutoStart" class="switch"></label>
       <label class="row-toggle"><span><strong>Open with Windows</strong><small>Starts quietly in the background when you sign in.</small></span><input type="checkbox" id="optLogin" class="switch"></label>
       <label class="row-toggle"><span><strong>Move the original to the Recycle Bin</strong><small>After subtitles are added and the new file checks out. Saves disk space.</small></span><input type="checkbox" id="optRecycle" class="switch"></label>

@@ -68,12 +68,14 @@ func posterFile(video string) (string, error) {
 		at = d * 0.15
 	}
 	tmp := out + ".tmp.jpg"
-	err = hiddenCmd(ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
+	pc := hiddenCmd(ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
 		"-ss", strconv.FormatFloat(at, 'f', 2, 64), "-i", video,
 		"-filter_complex", "thumbnail=48,split[a][b];"+
 			"[a]scale=360:540:force_original_aspect_ratio=increase,crop=360:540,boxblur=18:2,eq=brightness=-0.14:saturation=0.9[bg];"+
 			"[b]scale=360:-2[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2",
-		"-frames:v", "1", "-q:v", "4", tmp).Run()
+		"-frames:v", "1", "-q:v", "4", tmp)
+	lowPriority(pc)
+	err = pc.Run()
 	if err != nil || !fileExists(tmp) {
 		os.Remove(tmp)
 		return "", fmt.Errorf("could not take a frame from this movie")

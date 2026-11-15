@@ -102,7 +102,7 @@ func TestPrepareEndToEnd(t *testing.T) {
 	}
 
 	var last float64
-	res, err := (&Preparer{}).Prepare(video, subs[0], title, false, func(p float64) { last = p })
+	res, err := (&Preparer{}).Prepare(video, subs[0], title, false, func(p float64, _ string) { last = p })
 	if err != nil {
 		t.Fatalf("Prepare: %v", err)
 	}
@@ -116,7 +116,7 @@ func TestPrepareEndToEnd(t *testing.T) {
 		t.Fatal("original should be kept when recycle=false")
 	}
 	// Running again must not overwrite the first result
-	res2, err := (&Preparer{}).Prepare(video, subs[1], title, false, func(float64) {})
+	res2, err := (&Preparer{}).Prepare(video, subs[1], title, false, func(float64, string) {})
 	if err != nil || filepath.Base(res2.Output) != "Test Film (2024) (with subtitles).mkv" {
 		t.Fatalf("second run: %v %q", err, res2.Output)
 	}

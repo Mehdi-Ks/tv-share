@@ -168,6 +168,16 @@ $("folderBtn").addEventListener("click", async () => {
   } catch (e) { toast(errText(e), true); }
 });
 
+// Clicking the dimmed area outside a dialog closes it, like Esc.
+for (const d of document.querySelectorAll("dialog.dialog")) {
+  d.addEventListener("click", (e) => {
+    if (e.target !== d) return;
+    const r = d.getBoundingClientRect();
+    const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (!inside) d.close("cancel");
+  });
+}
+
 $("nameBtn").addEventListener("click", () => {
   $("nameInput").value = state.settings.name;
   $("nameDlg").showModal();
@@ -522,7 +532,8 @@ function renderDetailSubs(m) {
   if (preparing === m.path) {
     box.append(el("div", { class: "inline-progress", "data-path": m.path },
       el("div", { class: "ring" }, el("span", { text: "0%" })),
-      el("div", {}, el("p", { text: "Building the subtitles into the movie. You can keep using the app." }),
+      el("div", {}, el("p", { class: "stage", text: "Building the subtitles in…" }),
+        el("p", { class: "muted small", text: "You can keep using the app. Big movies take a minute or two." }),
         el("button", { class: "link-btn", style: "margin-left:0", text: "Cancel", onclick: () => api().CancelSubtitles() }))));
     return;
   }
@@ -550,7 +561,7 @@ function renderDetailSubs(m) {
 function showBusy(poster) {
   if (poster.querySelector(".busy")) return;
   poster.append(el("div", { class: "busy" },
-    el("div", { class: "ring" }, el("span", { text: "0%" })), el("small", { text: "Adding subtitles…" }),
+    el("div", { class: "ring" }, el("span", { text: "0%" })), el("small", { class: "stage", text: "Adding subtitles…" }),
     el("button", { class: "link-btn", text: "Cancel", onclick: (e) => { e.stopPropagation(); api().CancelSubtitles(); } })));
 }
 
@@ -591,6 +602,7 @@ function wireEvents() {
       ring.style.setProperty("--p", d.percent.toFixed(1));
       ring.querySelector("span").textContent = Math.round(d.percent) + "%";
     });
+    if (d.stage) document.querySelectorAll(`[data-path="${CSS.escape(d.path)}"] .stage`).forEach((s) => (s.textContent = d.stage));
   });
   rt().EventsOn("drop", (r) => {
     $("dropOverlay").classList.add("hidden");

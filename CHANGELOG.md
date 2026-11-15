@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.1 (2026-11-15)
+
+- **Settings is easier to close**: a close button (✕) in its corner, and clicking outside it closes it too, as does
+  Esc. *Done* is still at the bottom. The same click-outside works for the rename box.
+- **Show in folder and Open folder now open in front of the app.** Before, Explorer did open, but behind the
+  TV Share window, so the click seemed to do nothing.
+- **Adding subtitles names each step**: building the subtitles in, finishing the file, checking the new file,
+  moving the original to the Recycle Bin. Before, the progress could seem stuck in the 90s while Windows finished
+  writing a big file.
+- **The PC stays responsive while subtitles are added**: FFmpeg now runs at low priority (also for posters).
+
 ## 1.2.0 (2026-11-15)
 
 - **Movie details**: click a poster (or press Enter) to open a full-window page for that movie, over a wide frame
