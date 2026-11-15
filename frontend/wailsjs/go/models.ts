@@ -46,6 +46,7 @@ export namespace main {
 	    subs: SubOption[];
 	    defaultSub: number;
 	    outside: boolean;
+	    added: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Movie(source);
@@ -60,6 +61,7 @@ export namespace main {
 	        this.subs = this.convertValues(source["subs"], SubOption);
 	        this.defaultSub = source["defaultSub"];
 	        this.outside = source["outside"];
+	        this.added = source["added"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -79,6 +81,26 @@ export namespace main {
 		    }
 		    return a;
 		}
+	}
+	export class MovieInfo {
+	    minutes: number;
+	    resolution: string;
+	    video: string;
+	    audio: string[];
+	    subtitles: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new MovieInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.minutes = source["minutes"];
+	        this.resolution = source["resolution"];
+	        this.video = source["video"];
+	        this.audio = source["audio"];
+	        this.subtitles = source["subtitles"];
+	    }
 	}
 	export class NetworkInfo {
 	    name: string;

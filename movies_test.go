@@ -8,7 +8,7 @@ import (
 
 func TestCleanTitle(t *testing.T) {
 	cases := map[string]string{
-		"Some Movie (2026) [1080p] [WEBRip] [x265] [GROUP]":     "Some Movie (2026)",
+		"Some Movie (2026) [1080p] [WEBRip] [x265] [GROUP]":      "Some Movie (2026)",
 		"Some.Movie.2026.1080p.WEBRip.x265.10bit.AAC5.1-[GROUP]": "Some Movie (2026)",
 		"Les.Baronnes.2025.French.WEBRIP":                        "Les Baronnes (2025)",
 		"my_holiday_video":                                       "my holiday video",
@@ -134,4 +134,27 @@ func TestPrepareEndToEnd(t *testing.T) {
 		t.Fatalf("poster size: %q %v", out, err)
 	}
 	os.Remove(pf)
+}
+
+func TestParseProbe(t *testing.T) {
+	js := `{"streams":[
+	 {"codec_type":"video","codec_name":"hevc","width":1920,"height":800,"pix_fmt":"yuv420p10le","disposition":{"attached_pic":0}},
+	 {"codec_type":"audio","codec_name":"eac3","channels":6,"tags":{"language":"eng"}},
+	 {"codec_type":"audio","codec_name":"aac","channels":2,"tags":{"language":"fre"}},
+	 {"codec_type":"subtitle","codec_name":"subrip","tags":{"language":"eng"}},
+	 {"codec_type":"video","codec_name":"mjpeg","width":600,"height":900,"disposition":{"attached_pic":1}}],
+	 "format":{"duration":"6612.4"}}`
+	info, err := parseProbe([]byte(js))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Minutes != 110 || info.Resolution != "1080p" || info.Video != "HEVC 10-bit" {
+		t.Fatalf("video: %+v", info)
+	}
+	if len(info.Audio) != 2 || info.Audio[0] != "English 5.1 surround" || info.Audio[1] != "French stereo" {
+		t.Fatalf("audio: %v", info.Audio)
+	}
+	if len(info.Subtitles) != 1 || info.Subtitles[0] != "English" {
+		t.Fatalf("subs: %v", info.Subtitles)
+	}
 }

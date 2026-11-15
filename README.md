@@ -7,6 +7,10 @@
 TV Share makes a folder on your PC (your *Videos* folder by default) show up on your TV, over your home Wi-Fi.
 Open VLC on the TV, pick your PC, and play. On the PC, your movies appear as a dark, cinematic wall of posters.
 Each poster is a frame taken from the movie itself (the screenshot above shows the title covers used when there's no frame yet).
+Sort by *Recently added*, *A to Z* or size, and click a poster for its details: runtime, picture quality, sound
+tracks and subtitles, over a wide frame from the film.
+
+![A movie's details page](docs/screenshot-details.png)
 
 It also fixes the most common annoyance: **subtitles that don't show up on the TV.** TV apps usually ignore separate
 `.srt` files when playing over the network. One click builds the subtitles *into* the movie file, with no re-encoding
@@ -33,6 +37,8 @@ Needs Windows 10 or 11, 64-bit.
 2. If Windows asks whether to allow access on the network, click **Allow**.
 3. Keep the app open and the PC awake while you watch.
 
+Keyboard: arrow keys move across the posters, Enter opens a movie, Esc goes back, Ctrl+F searches.
+
 The **?** button opens these steps inside the app, with your PC's name, folder and network.
 
 ![The "Watch on your TV" panel](docs/screenshot-help.png)
@@ -48,7 +54,7 @@ PlayStation media players, and many TVs' built-in media apps.
 **Subtitles**
 - Movies with subtitles already inside show **CC**. Nothing to do.
 - Movies that came with `.srt` files (next to the movie or in a `Subs` folder) show **SRT** and **+ Subtitles**.
-  Click it, or hover the poster to pick another language first. The new file is checked (same length, subtitle track present) before anything
+  Click it, or open the movie (click its poster) to pick another language first. The **Can get subtitles** filter lists them all. The new file is checked (same length, subtitle track present) before anything
   else happens. Then the original goes to the **Recycle Bin**, never deleted outright. You can turn that off in Settings.
 - Movie somewhere else (like Downloads)? Drag its folder onto the window to add subtitles. To watch it, move it into
   the shared folder.
@@ -67,7 +73,7 @@ PlayStation media players, and many TVs' built-in media apps.
 ## Privacy and safety
 
 - The TV can **only read** the folder you choose. Nothing on your PC can be changed or deleted from the network.
-- Sharing only happens while the app is open and **Start sharing** is on. It works on your local network only,
+- Sharing only happens while the app is open and **Share with TV** is on. It works on your local network only,
   with nothing sent to the internet.
 - The only downloads are the two helpers below, from Windows' official package manager (winget).
 - Posters are made on your PC from a frame of each movie and cached in `%LOCALAPPDATA%\TV Share\posters`
@@ -102,7 +108,7 @@ wails build -clean -trimpath
 ```
 
 The app ends up in `build/bin/TVShare.exe`. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.1.0 build/installer/tvshare.nsi`, which writes
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.2.0 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 

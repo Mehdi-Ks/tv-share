@@ -171,3 +171,15 @@ func networkInfo() NetworkInfo {
 	}
 	return info
 }
+
+// fileAdded is when a file arrived on this PC: the later of its creation time here and its
+// last change. Copied or downloaded movies keep an old "modified" date, so creation matters.
+func fileAdded(st os.FileInfo) int64 {
+	t := st.ModTime().UnixMilli()
+	if d, ok := st.Sys().(*syscall.Win32FileAttributeData); ok {
+		if c := d.CreationTime.Nanoseconds() / 1e6; c > t {
+			t = c
+		}
+	}
+	return t
+}

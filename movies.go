@@ -35,6 +35,7 @@ type Movie struct {
 	Subs       []SubOption `json:"subs"`    // separate subtitle files found next to it
 	DefaultSub int         `json:"defaultSub"`
 	Outside    bool        `json:"outside"` // not in the shared folder (dropped in from elsewhere)
+	Added      int64       `json:"added"`   // when the file arrived on this PC (Unix ms), for "Recently added"
 }
 
 // scanMovies lists the videos in root (and its sub-folders, up to 3 levels).
@@ -93,6 +94,7 @@ func describeMovie(p, root, prefLang string) Movie {
 	m := Movie{Path: p, Title: movieTitle(p, root)}
 	if st, err := os.Stat(p); err == nil {
 		m.SizeMB = st.Size() >> 20
+		m.Added = fileAdded(st)
 	}
 	m.HasSubs = hasEmbeddedSubs(p)
 	m.Subs = findSubs(p)

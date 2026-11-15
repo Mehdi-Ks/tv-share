@@ -14,6 +14,14 @@ export function ChooseFolder() {
   return window['go']['main']['App']['ChooseFolder']();
 }
 
+export function GetBackdrop(arg1) {
+  return window['go']['main']['App']['GetBackdrop'](arg1);
+}
+
+export function GetMovieInfo(arg1) {
+  return window['go']['main']['App']['GetMovieInfo'](arg1);
+}
+
 export function GetPoster(arg1) {
   return window['go']['main']['App']['GetPoster'](arg1);
 }

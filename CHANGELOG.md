@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0 (2026-11-15)
+
+- **Movie details**: click a poster (or press Enter) to open a full-window page for that movie, over a wide frame
+  from the film: runtime, picture quality, sound tracks, subtitles, and where to find it on the TV. The poster
+  glides from the shelf into the page. Adding subtitles now happens here, with the language list in plain sight.
+- **Sort and filter**: *Recently added* (the default), *A to Z* or *Biggest first*, and a *Can get subtitles* filter.
+- **Keyboard**: arrow keys move across the poster shelf, Enter opens a movie, Esc goes back.
+- Search stays visible in small windows, small links are easier to click, screen readers no longer read the whole
+  shelf aloud on every refresh, and the help panel keeps keyboard focus inside it while open.
+- Calmer: posters no longer cascade in on launch; motion is kept for things you do.
+
 ## 1.1.0 (2026-11-15)
 
 A new look: a dark, cinematic wall of posters.
