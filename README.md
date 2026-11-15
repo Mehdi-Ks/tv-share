@@ -127,7 +127,7 @@ The app ends up in `build/bin/TVShare.exe`. Official posters need a TMDB key: ge
 [themoviedb.org](https://www.themoviedb.org/settings/api) and paste it in the app's Settings, or put it in
 `build/tmdb.key` (one line, never committed) and build with `build.ps1`, which builds it into the app and also
 makes the installer. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.6.0 build/installer/tvshare.nsi`, which writes
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.6.1 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 

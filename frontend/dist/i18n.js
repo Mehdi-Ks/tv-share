@@ -68,11 +68,11 @@
     "Subtitles can be added": "Sous-titres à ajouter",
     "Subtitles": "Sous-titres",
     "Not shared": "Non partagé",
-    "Outside your shared folder: the TV won't see it": "En dehors du dossier partagé : la TV ne le verra pas",
+    "Outside your shared folder: the TV won't see it": "En dehors du dossier partagé : la TV ne le verra pas.",
     "Adding subtitles…": "Ajout des sous-titres…",
     "Cancel": "Annuler",
     "Drop to add this movie": "Déposez pour ajouter ce film",
-    "Drop a movie, or a folder with a movie inside.": "Déposez un film, ou un dossier qui contient un film.",
+    "Drop a movie, or a folder with a movie inside.": "Déposez un film ou un dossier qui contient un film.",
 
     // ---- Help panel
     "Watch on your TV": "Regarder sur la TV",
@@ -90,16 +90,16 @@
     "No sound track found": "Aucune piste audio trouvée",
     "Couldn't read this file's details.": "Impossible de lire les détails de ce fichier.",
     "Built into the movie. The TV will show them.": "Intégrés au film. La TV les affichera.",
-    "None found. Put a .srt file next to the movie (same name, or in a Subs folder), then press Refresh.": "Aucun trouvé. Placez un fichier .srt à côté du film (même nom, ou dans un dossier Subs), puis cliquez sur Actualiser.",
-    "Subtitle files were found next to the movie. TVs ignore separate files, so add them into the movie. It takes about a minute, with no quality loss.": "Des fichiers de sous-titres ont été trouvés à côté du film. Les TV ignorent les fichiers séparés : ajoutez-les dans le film. Cela prend environ une minute, sans perte de qualité.",
+    "None found. Put a .srt file next to the movie (same name, or in a Subs folder), then press Refresh.": "Aucun trouvé. Placez un fichier .srt à côté du film (même nom ou dans un dossier Subs), puis cliquez sur Actualiser.",
+    "Subtitle files were found next to the movie. TVs ignore separate files, so add them into the movie. It takes about a minute, with no quality loss.": "Des fichiers de sous-titres ont été trouvés à côté du film. Les TV ignorent les fichiers séparés : intégrez-les au film. Cela prend environ une minute, sans perte de qualité.",
     "Add subtitles": "Ajouter les sous-titres",
     "Building the subtitles in…": "Intégration des sous-titres…",
     "Finishing the file…": "Finalisation du fichier…",
     "Checking the new file…": "Vérification du nouveau fichier…",
     "Moving the original to the Recycle Bin…": "Envoi de l'original à la Corbeille…",
     "Done": "Terminé",
-    "You can keep using the app. Big movies take a minute or two.": "Vous pouvez continuer à utiliser l'app. Les gros films prennent une à deux minutes.",
-    "This file is outside your shared folder, so the TV can't see it. Move it into the shared folder to watch it.": "Ce fichier est en dehors du dossier partagé : la TV ne peut pas le voir. Déplacez-le dans le dossier partagé pour le regarder.",
+    "You can keep using the app. Big movies take a minute or two.": "Vous pouvez continuer à utiliser l'app. Les gros fichiers prennent une à deux minutes.",
+    "This file is outside your shared folder, so the TV can't see it. Move it into the shared folder to watch it.": "Ce fichier est en dehors du dossier partagé : la TV ne peut pas le lire. Déplacez-le dans le dossier partagé pour pouvoir le regarder.",
     "Turn on Share with TV, then find it in VLC under Local network.": "Activez « Partager avec la TV », puis trouvez-le dans VLC sous Réseau local.",
     "Not this movie?": "Ce n'est pas le bon film ?",
     "Find it": "Le trouver",
@@ -120,7 +120,7 @@
     "Search TMDB by title": "Chercher un titre sur TMDB",
     "Search": "Rechercher",
     "Searching TMDB…": "Recherche sur TMDB…",
-    "Nothing found. Try another spelling, or leave out the year.": "Rien trouvé. Essayez une autre orthographe, ou sans l'année.",
+    "Nothing found. Try another spelling, or leave out the year.": "Rien trouvé. Essayez une autre orthographe ou sans l'année.",
     "Use a frame from the movie instead": "Utiliser plutôt une image du film",
     "Results from TMDB.": "Résultats de TMDB.",
     "Year unknown": "Année inconnue",
@@ -140,7 +140,7 @@
     "Your own TMDB key": "Votre propre clé TMDB",
     "Optional. This app already has one; use yours if you prefer.": "Facultatif. L'app en a déjà une ; utilisez la vôtre si vous préférez.",
     "Using your own key. Empty the box and press Save to go back to the app's key.": "Votre clé est utilisée. Videz le champ et cliquez sur Enregistrer pour revenir à celle de l'app.",
-    "Needed for official posters. Get a free key at themoviedb.org (Settings, API).": "Nécessaire pour les affiches officielles. Obtenez une clé gratuite sur themoviedb.org (Paramètres, API).",
+    "Needed for official posters. Get a free key at themoviedb.org (Settings, API).": "Nécessaire pour les affiches officielles. Obtenez une clé gratuite sur themoviedb.org (Paramètres > API).",
     "Paste a key": "Collez une clé",
     "Your key is saved": "Votre clé est enregistrée",
     "Save": "Enregistrer",
@@ -153,12 +153,12 @@
     "Starts quietly in the background when you sign in.": "Démarre discrètement en arrière-plan à l'ouverture de session.",
     "Move the original to the Recycle Bin": "Envoyer l'original à la Corbeille",
     "After subtitles are added and the new file checks out. Saves disk space.": "Une fois les sous-titres ajoutés et le nouveau fichier vérifié. Libère de l'espace disque.",
-    "Preferred subtitle language": "Langue de sous-titres préférée",
+    "Preferred subtitle language": "Langue préférée pour les sous-titres",
     "Picked first when a movie has several.": "Choisie en premier quand un film en a plusieurs.",
     "App language": "Langue de l'app",
     "Changes the app's text. Movie titles stay as they are.": "Change les textes de l'app. Les titres des films restent tels quels.",
     "Automatic (Windows)": "Automatique (Windows)",
-    "This product uses the TMDB API but is not endorsed or certified by TMDB.": "Ce produit utilise l'API TMDB mais n'est ni approuvé ni certifié par TMDB.",
+    "This product uses the TMDB API but is not endorsed or certified by TMDB.": "Ce produit utilise l'API TMDB, mais n'est ni approuvé ni certifié par TMDB.",
     "This is what you'll pick on the TV.": "C'est ce nom que vous choisirez sur la TV.",
 
     // ---- Messages from the app (Go side)
@@ -237,20 +237,20 @@
     "<strong>New: official movie posters.</strong> TV Share can look your movies up on TMDB for posters, plot and rating. Only titles and years are sent.":
       "<strong>Nouveau : affiches officielles.</strong> TV Share peut chercher vos films sur TMDB pour les affiches, le résumé et la note. Seuls les titres et années sont envoyés.",
     "Put movies in <span id=\"emptyFolder\" class=\"path\"></span>, or drop a movie folder onto this window.":
-      "Mettez des films dans <span id=\"emptyFolder\" class=\"path\"></span>, ou déposez un dossier de film sur cette fenêtre.",
+      "Mettez des films dans <span id=\"emptyFolder\" class=\"path\"></span> ou déposez un dossier de film sur cette fenêtre.",
     "Turn on <strong>Share with TV</strong> (top right) and keep this app open, with the PC awake, on the <strong>same Wi-Fi</strong> as the TV.":
       "Activez <strong>Partager avec la TV</strong> (en haut à droite) et gardez l'app ouverte, le PC allumé, sur le <strong>même Wi-Fi</strong> que la TV.",
     "On the TV, open <strong>VLC</strong>. It's free in the TV's app store.": "Sur la TV, ouvrez <strong>VLC</strong>. Il est gratuit dans la boutique d'apps de la TV.",
     "Go to <strong>Browse → Local network → <span class=\"tv-name\">your PC</span></strong> and pick a movie.":
       "Allez dans <strong>Navigation → Réseau local → <span class=\"tv-name\">votre PC</span></strong> et choisissez un film.",
     "<strong>Movie won't start, or VLC jumps to another file?</strong> VLC is resuming it from the very end. Long-press the movie in VLC and choose <strong>Play from start</strong>.":
-      "<strong>Le film ne démarre pas, ou VLC passe à un autre fichier ?</strong> VLC le reprend à la toute fin. Faites un appui long sur le film dans VLC et choisissez <strong>Lire depuis le début</strong>.",
+      "<strong>Le film ne démarre pas ou VLC passe à un autre fichier ?</strong> VLC le reprend à la toute fin. Faites un appui long sur le film dans VLC et choisissez <strong>Lire depuis le début</strong>.",
     "Rename your PC or change the movie folder in <button id=\"drawerSettings\" class=\"link-inline\">Settings</button>.":
       "Renommez votre PC ou changez le dossier des films dans les <button id=\"drawerSettings\" class=\"link-inline\">Paramètres</button>.",
     "Also works with Kodi, game consoles and most smart-TV media players. The first time, if Windows asks whether to allow network access, click <strong>Allow</strong>.":
       "Fonctionne aussi avec Kodi, les consoles de jeux et la plupart des lecteurs multimédias des TV. La première fois, si Windows demande d'autoriser l'accès au réseau, cliquez sur <strong>Autoriser</strong>.",
     "The first time, Windows asks whether <strong>Rclone</strong> may use the network. Rclone is the helper TV Share uses to show your movies to the TV.":
-      "La première fois, Windows demande si <strong>Rclone</strong> peut utiliser le réseau. Rclone est l'outil qui permet à TV Share de montrer vos films à la TV.",
+      "La première fois, Windows demande si <strong>Rclone</strong> peut utiliser le réseau. Rclone est l'outil qui permet à TV Share de montrer vos films sur la TV.",
     "Click <strong>Allow</strong> (in French: <strong>Autoriser</strong>). Otherwise your TV can't see this PC.":
       "Cliquez sur <strong>Autoriser</strong>. Sinon, votre TV ne pourra pas voir ce PC.",
   };

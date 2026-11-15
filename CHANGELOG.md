@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1 (2026-11-15)
+
+- French wording proofread with DeepL Write: clearer subtitle and error messages ("intégrez-les au film",
+  "la TV ne peut pas le lire", "Langue préférée pour les sous-titres"), and punctuation fixes.
+
 ## 1.6.0 (2026-11-15)
 
 - **TV Share speaks French.** The app follows Windows' language automatically (French or English), and
