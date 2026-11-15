@@ -123,4 +123,15 @@ func TestPrepareEndToEnd(t *testing.T) {
 	if matches, _ := filepath.Glob(filepath.Join(dir, "*.partial.mkv")); len(matches) != 0 {
 		t.Fatalf("leftover temp files: %v", matches)
 	}
+
+	// Poster: a 360x540 JPEG frame, cached, returned as a data URL
+	url, err := posterDataURL(res.Output)
+	if err != nil || len(url) < 1000 || url[:23] != "data:image/jpeg;base64," {
+		t.Fatalf("poster: %v (len %d)", err, len(url))
+	}
+	pf, _ := posterFile(res.Output)
+	if out, err := hiddenCmd(toolFFprobe.find(), "-v", "error", "-show_entries", "stream=width,height", "-of", "csv=p=0", pf).Output(); err != nil || string(out[:7]) != "360,540" {
+		t.Fatalf("poster size: %q %v", out, err)
+	}
+	os.Remove(pf)
 }

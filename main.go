@@ -32,7 +32,7 @@ func main() {
 		MinHeight:        560,
 		WindowStartState: startState,
 		AssetServer:      &assetserver.Options{Assets: assets},
-		BackgroundColour: &options.RGBA{R: 16, G: 18, B: 23, A: 255},
+		BackgroundColour: &options.RGBA{R: 17, G: 17, B: 17, A: 255},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
 		SingleInstanceLock: &options.SingleInstanceLock{
@@ -45,7 +45,7 @@ func main() {
 		},
 		Bind: []interface{}{app},
 		Windows: &windows.Options{
-			Theme: windows.SystemDefault,
+			Theme: windows.Dark,
 		},
 	})
 	if err != nil {

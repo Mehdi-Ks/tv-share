@@ -3,25 +3,24 @@
 const api = () => window.go.main.App;
 const rt = () => window.runtime;
 const $ = (id) => document.getElementById(id);
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 let state = null;
 let movies = [];
-let preparing = null; // path of the movie being prepared
+let preparing = null;          // path of the movie being prepared
+const posters = new Map();     // path -> data URL, or "" when no frame could be taken
 
 // ---------- helpers ----------
 function toast(msg, isError = false, ms = 4200) {
-  const el = document.createElement("div");
-  el.className = "toast" + (isError ? " error" : "");
-  el.textContent = msg;
-  $("toasts").appendChild(el);
-  setTimeout(() => el.remove(), ms);
+  const t = el("div", { class: "toast" + (isError ? " error" : ""), text: msg });
+  $("toasts").append(t);
+  setTimeout(() => {
+    t.classList.add("leaving");
+    setTimeout(() => t.remove(), 180);
+  }, ms);
 }
-function errText(e) {
-  return (e && e.message) || String(e || "Something went wrong");
-}
-function gb(mb) {
-  return mb >= 1024 ? (mb / 1024).toFixed(1) + " GB" : mb + " MB";
-}
+const errText = (e) => (e && e.message) || String(e || "Something went wrong");
+const gb = (mb) => (mb >= 1024 ? (mb / 1024).toFixed(1) + " GB" : mb + " MB");
 function el(tag, attrs = {}, ...kids) {
   const n = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -33,12 +32,27 @@ function el(tag, attrs = {}, ...kids) {
   for (const k of kids) if (k) n.append(k);
   return n;
 }
-const checkSvg = () => {
+function icon(id, cls) {
   const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  s.setAttribute("viewBox", "0 0 16 16");
-  s.innerHTML = '<path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+  s.setAttribute("aria-hidden", "true");
+  if (cls) s.setAttribute("class", cls);
+  const u = document.createElementNS("http://www.w3.org/2000/svg", "use");
+  u.setAttribute("href", "#" + id);
+  s.append(u);
   return s;
-};
+}
+// "Some Movie (2026)" -> { name: "Some Movie", year: "2026" }
+function splitTitle(t) {
+  const m = /^(.*?)\s*\((\d{4})\)$/.exec(t);
+  return m ? { name: m[1], year: m[2] } : { name: t, year: "" };
+}
+// A warm, stable colour per title for covers without a frame
+function coverColors(t) {
+  let h = 0;
+  for (const c of t) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const hue = [8, 22, 32, 345, 200, 265, 160][h % 7];
+  return `linear-gradient(160deg, hsl(${hue} 55% 34%) 0%, hsl(${(hue + 25) % 360} 45% 16%) 70%, #0d0d0d 100%)`;
+}
 
 // ---------- state ----------
 async function load() {
@@ -53,37 +67,34 @@ function render() {
   const ready = s.deps.ready;
   $("setup").classList.toggle("hidden", ready);
   $("main").classList.toggle("hidden", !ready);
+  $("searchWrap").style.visibility = ready ? "" : "hidden";
+  $("shareBtn").style.visibility = ready ? "" : "hidden";
   $("depRclone").className = "check" + (s.deps.rclone ? " done" : "");
   $("depFfmpeg").className = "check" + (s.deps.ffmpeg ? " done" : "");
 
   const on = s.sharing;
-  $("statusPill").className = "pill " + (on ? "pill-on" : "pill-off");
-  $("statusText").textContent = on ? "Sharing" : "Not sharing";
-  $("shareCard").classList.toggle("on", on);
-  $("shareTitle").textContent = on ? "Your TV can see your movies" : "Share with your TV";
-  $("shareSub").textContent = on
-    ? `Look for “${s.settings.name}” on the TV.`
-    : "Your TV can't see anything yet.";
-  $("shareBtn").classList.toggle("on", on);
-  $("shareBtn").setAttribute("aria-pressed", on);
-  $("shareBtnText").textContent = on ? "Stop sharing" : "Start sharing";
+  $("shareBtn").setAttribute("aria-checked", on);
+  $("shareSub").textContent = on ? `On · TV sees “${s.settings.name}”` : "Off";
+  $("shareBtn").title = on ? "Stop sharing" : "Let the TV see your movies";
 
+  document.querySelectorAll(".tv-name").forEach((n) => (n.textContent = s.settings.name));
   $("folderPath").textContent = s.settings.folder;
   $("emptyFolder").textContent = s.settings.folder;
-  $("nameText").textContent = s.settings.name;
-  $("nameText2").textContent = s.settings.name;
 
   const n = s.network || {};
-  const parts = [];
-  if (n.name) parts.push(n.name);
-  if (n.ip) parts.push(n.ip);
-  $("netText").textContent = parts.length ? parts.join(" · ") : (n.ip === "" ? "Not connected" : "Checking…");
-  $("netWarn").classList.toggle("hidden", n.category !== "Public");
+  const parts = [n.name, n.ip].filter(Boolean);
+  $("netText").textContent = parts.length ? parts.join(" · ") : "Checking…";
+  $("netWarn").classList.toggle("hidden", !ready || n.category !== "Public");
 
   $("optAutoStart").checked = s.settings.autoStartShare;
   $("optLogin").checked = s.settings.launchAtLogin;
   $("optRecycle").checked = s.settings.recycleOriginal;
-  $("versionText").textContent = `TV Share ${s.version}`;
+  $("versionText").textContent = `TV Share ${s.version} · free and open source`;
+}
+
+function showShareError(msg) {
+  $("shareError").textContent = msg;
+  $("shareError").classList.toggle("hidden", !msg);
 }
 
 // ---------- setup ----------
@@ -99,7 +110,7 @@ $("installBtn").addEventListener("click", async () => {
     state.deps = deps;
     $("setupLog").textContent = "";
     if (deps.ready) {
-      toast("All set. You can start sharing.");
+      toast("All set. Turn on “Share with TV” to start.");
       await load();
     }
   } catch (e) {
@@ -117,23 +128,26 @@ $("installBtn").addEventListener("click", async () => {
 $("shareBtn").addEventListener("click", async () => {
   const btn = $("shareBtn");
   btn.disabled = true;
-  $("shareError").classList.add("hidden");
+  showShareError("");
   try {
     if (state.sharing) {
       await api().StopShare();
     } else {
-      $("shareBtnText").textContent = "Starting…";
+      $("shareSub").textContent = "Starting…";
       await api().StartShare();
+      if (!localStorageGet("seenHelp")) { openDrawer(); localStorageSet("seenHelp", "1"); }
     }
   } catch (e) {
-    $("shareError").textContent = "Couldn't start: " + errText(e);
-    $("shareError").classList.remove("hidden");
+    showShareError("Couldn't start sharing: " + errText(e));
   } finally {
     btn.disabled = false;
     state = await api().GetState();
     render();
   }
 });
+
+function localStorageGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function localStorageSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
 
 async function restartIfSharing() {
   if (!state.sharing) return;
@@ -172,11 +186,40 @@ $("nameDlg").addEventListener("close", async () => {
 });
 
 $("netBtn").addEventListener("click", () => api().OpenNetworkSettings());
-$("helpBtn").addEventListener("click", () => api().OpenURL("https://github.com/Mehdi-Ks/tv-share#when-something-doesnt-work"));
 $("openFolderBtn").addEventListener("click", () => api().OpenFolder(""));
+$("emptyOpenBtn").addEventListener("click", () => api().OpenFolder(""));
 $("refreshBtn").addEventListener("click", async () => {
   api().RefreshNetwork().then((n) => { state.network = n; render(); });
   loadMovies();
+});
+$("helpLink").addEventListener("click", () => api().OpenURL("https://github.com/Mehdi-Ks/tv-share#when-something-doesnt-work"));
+
+// ---------- drawer ----------
+let drawerReturn = null;
+function openDrawer() {
+  drawerReturn = document.activeElement;
+  $("scrim").hidden = false;
+  requestAnimationFrame(() => $("scrim").classList.add("open"));
+  $("drawer").classList.add("open");
+  $("drawer").setAttribute("aria-hidden", "false");
+  setTimeout(() => $("drawerClose").focus(), 50);
+}
+function closeDrawer() {
+  $("scrim").classList.remove("open");
+  $("drawer").classList.remove("open");
+  $("drawer").setAttribute("aria-hidden", "true");
+  setTimeout(() => { $("scrim").hidden = true; }, 220);
+  if (drawerReturn) drawerReturn.focus();
+}
+$("helpBtn").addEventListener("click", openDrawer);
+$("drawerClose").addEventListener("click", closeDrawer);
+$("scrim").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && $("drawer").classList.contains("open")) closeDrawer();
+  if ((e.ctrlKey && e.key.toLowerCase() === "f") || (e.key === "/" && document.activeElement.tagName !== "INPUT")) {
+    e.preventDefault();
+    $("search").focus();
+  }
 });
 
 // ---------- settings ----------
@@ -207,6 +250,7 @@ $("optLang").addEventListener("change", async (ev) => {
 });
 
 // ---------- movies ----------
+let firstRender = true;
 async function loadMovies() {
   $("moviesSub").textContent = "Looking for movies…";
   try {
@@ -218,57 +262,121 @@ async function loadMovies() {
   renderMovies();
 }
 
+$("search").addEventListener("input", () => applySearch());
+function applySearch() {
+  const q = $("search").value.trim().toLowerCase();
+  let shown = 0;
+  document.querySelectorAll("#grid .card").forEach((c) => {
+    const hit = !q || c.dataset.title.includes(q);
+    c.classList.toggle("hidden", !hit);
+    if (hit) shown++;
+  });
+  $("noMatch").classList.toggle("hidden", !(movies.length && q && shown === 0));
+}
+
 function renderMovies() {
-  const list = $("movieList");
-  list.replaceChildren();
+  const grid = $("grid");
+  grid.replaceChildren();
   $("emptyState").classList.toggle("hidden", movies.length > 0);
-  const needSubs = movies.filter((m) => !m.hasSubs && m.subs.length).length;
+  const canAdd = movies.filter((m) => !m.hasSubs && m.subs.length).length;
   $("moviesSub").textContent = movies.length === 0
     ? "Nothing found yet"
-    : `${movies.length} movie${movies.length > 1 ? "s" : ""}` + (needSubs ? ` · ${needSubs} can get subtitles` : "");
+    : `${movies.length} movie${movies.length > 1 ? "s" : ""}` + (canAdd ? ` · ${canAdd} can get subtitles` : "");
 
-  for (const m of movies) list.append(movieRow(m));
+  movies.forEach((m, i) => {
+    const card = movieCard(m);
+    if (firstRender && !reduceMotion && i < 24) {
+      card.classList.add("card-in");
+      card.style.animationDelay = i * 35 + "ms";
+    }
+    grid.append(card);
+  });
+  firstRender = false;
+  applySearch();
+  observePosters();
 }
 
-function movieRow(m) {
-  const meta = el("div", { class: "movie-meta" }, el("span", { text: gb(m.sizeMB) }));
-  if (m.outside) meta.append(el("span", { class: "tag", text: "Not in your shared folder: the TV won't see it", title: m.path }));
+function movieCard(m) {
+  const { name, year } = splitTitle(m.title);
+  const poster = el("div", { class: "poster" });
 
-  const actions = el("div", { class: "movie-actions" });
-  const row = el("li", { class: "movie", "data-path": m.path },
-    el("div", { class: "movie-title", text: m.title, title: m.path }),
-    actions,
-    meta,
-  );
+  // Cover (always there; the frame fades in on top when ready)
+  const cover = el("div", { class: "cover" }, icon("i-tv", "cover-tv"), document.createTextNode(name), year ? el("small", { text: year }) : null);
+  cover.style.background = coverColors(m.title);
+  poster.append(cover);
+  const img = el("img", { alt: "", decoding: "async" });
+  img.addEventListener("load", () => img.classList.add("loaded"));
+  poster.append(img);
+  const cached = posters.get(m.path);
+  if (cached) img.src = cached;
 
+  if (m.hasSubs) poster.append(el("span", { class: "corner corner-ok", title: "Subtitles built in" }, icon("i-cc"), document.createTextNode("CC")));
+  else if (m.subs.length) poster.append(el("span", { class: "corner", title: "Subtitles can be added" }, document.createTextNode("SRT")));
+
+  // Hover / focus panel
+  const overlay = el("div", { class: "overlay" });
   if (m.hasSubs) {
-    const b = el("span", { class: "badge badge-ok" }, checkSvg(), document.createTextNode("Subtitles built in"));
-    actions.append(b);
+    overlay.append(el("div", { class: "done" }, icon("i-check"), document.createTextNode("Subtitles built in")));
   } else if (m.subs.length) {
-    const sel = el("select", { "aria-label": "Subtitle language" });
+    const sel = el("select", { "aria-label": `Subtitle language for ${name}` });
     m.subs.forEach((s, i) => sel.append(el("option", { value: s.path, text: s.label, selected: i === m.defaultSub })));
-    const btn = el("button", {
-      class: "btn btn-primary",
-      text: "Add subtitles",
-      disabled: preparing !== null,
-      onclick: () => addSubtitles(m, sel.value, row),
-    });
-    actions.append(sel, btn);
+    overlay.append(sel, el("button", {
+      class: "btn btn-primary", disabled: preparing !== null,
+      onclick: (e) => { e.stopPropagation(); addSubtitles(m, sel.value, poster); },
+    }, icon("i-plus"), document.createTextNode("Add subtitles")));
   } else {
-    actions.append(el("span", { class: "badge badge-muted", text: "No subtitle files found" }));
+    overlay.append(el("div", { class: "muted small", text: "No subtitle files found" }));
   }
-  return row;
+  overlay.append(el("button", { class: "link-btn file-link", text: "Show in folder", onclick: () => api().ShowInFolder(m.path) }));
+  poster.append(overlay);
+
+  // Under the poster
+  const meta = el("div", { class: "card-meta" });
+  if (year) meta.append(el("span", { text: year }));
+  meta.append(el("span", { text: gb(m.sizeMB) }));
+  if (m.outside) meta.append(el("span", { class: "tag", text: "Not shared", title: "Outside your shared folder: the TV won't see it" }));
+  if (m.hasSubs) meta.append(el("span", { class: "ok" }, icon("i-cc"), document.createTextNode("CC")));
+  else if (m.subs.length) meta.append(el("button", {
+    class: "add", disabled: preparing !== null, title: `Add ${m.subs[m.defaultSub].label} subtitles`,
+    onclick: () => addSubtitles(m, m.subs[m.defaultSub].path, poster),
+  }, icon("i-plus"), document.createTextNode("Subtitles")));
+
+  const statusText = m.hasSubs ? "subtitles built in" : m.subs.length ? "subtitles can be added" : "no subtitles";
+  return el("li", {
+    class: "card", tabindex: "0", "data-path": m.path, "data-title": m.title.toLowerCase(),
+    "aria-label": `${m.title}, ${gb(m.sizeMB)}, ${statusText}`,
+  }, poster, el("div", { class: "card-title", text: name, title: m.path }), meta);
 }
 
-async function addSubtitles(m, subPath, row) {
+// Posters load only when their card scrolls into view.
+const posterObserver = new IntersectionObserver((entries) => {
+  for (const en of entries) {
+    if (!en.isIntersecting) continue;
+    posterObserver.unobserve(en.target);
+    const path = en.target.dataset.path;
+    if (posters.has(path)) continue;
+    api().GetPoster(path).then((url) => {
+      posters.set(path, url);
+      const img = en.target.querySelector(".poster img");
+      if (img) img.src = url;
+    }).catch(() => posters.set(path, ""));
+  }
+}, { rootMargin: "300px" });
+function observePosters() {
+  document.querySelectorAll("#grid .card").forEach((c) => {
+    if (!posters.has(c.dataset.path)) posterObserver.observe(c);
+  });
+}
+
+async function addSubtitles(m, subPath, poster) {
   preparing = m.path;
-  document.querySelectorAll(".movie-actions .btn-primary").forEach((b) => (b.disabled = true));
-  const bar = el("i");
-  const pct = el("span", { text: "0%" });
-  const cancel = el("button", { class: "link-btn", text: "Cancel", onclick: () => api().CancelSubtitles() });
-  const progress = el("div", { class: "progress" }, el("div", { class: "bar" }, bar), pct, cancel);
-  row.append(progress);
-  row._setProgress = (p) => { bar.style.width = p + "%"; pct.textContent = Math.round(p) + "%"; };
+  document.querySelectorAll(".overlay .btn-primary, .card-meta .add").forEach((b) => (b.disabled = true));
+  const label = el("span", { text: "0%" });
+  const ring = el("div", { class: "ring" }, label);
+  const busy = el("div", { class: "busy" }, ring, el("small", { text: "Adding subtitles…" }),
+    el("button", { class: "link-btn", text: "Cancel", onclick: () => api().CancelSubtitles() }));
+  poster.append(busy);
+  poster.closest(".card").dataset.busy = "1";
 
   try {
     const res = await api().AddSubtitles(m.path, subPath);
@@ -292,11 +400,13 @@ function wireEvents() {
   rt().EventsOn("share:stopped", async (msg) => {
     state = await api().GetState();
     render();
-    if (msg) toast("Sharing stopped: " + msg, true, 7000);
+    if (msg) showShareError("Sharing stopped: " + msg);
   });
   rt().EventsOn("prepare:progress", (d) => {
-    const row = document.querySelector(`.movie[data-path="${CSS.escape(d.path)}"]`);
-    if (row && row._setProgress) row._setProgress(d.percent);
+    const card = document.querySelector(`.card[data-path="${CSS.escape(d.path)}"]`);
+    if (!card) return;
+    const ring = card.querySelector(".ring");
+    if (ring) { ring.style.setProperty("--p", d.percent.toFixed(1)); ring.querySelector("span").textContent = Math.round(d.percent) + "%"; }
   });
   rt().EventsOn("drop", (r) => {
     $("dropOverlay").classList.add("hidden");
@@ -312,8 +422,8 @@ window.addEventListener("dragleave", () => { dragDepth = Math.max(0, dragDepth -
 window.addEventListener("dragover", (e) => e.preventDefault());
 window.addEventListener("drop", (e) => { e.preventDefault(); dragDepth = 0; $("dropOverlay").classList.add("hidden"); });
 
-// Refresh when the window comes back to the front (new downloads show up)
-let lastFocusLoad = 0;
+// New downloads show up when the window comes back to the front
+let lastFocusLoad = Date.now();
 window.addEventListener("focus", () => {
   if (!state || !state.deps.ready || preparing || Date.now() - lastFocusLoad < 4000) return;
   lastFocusLoad = Date.now();

@@ -2,10 +2,11 @@
 
 **Watch the movies on your Windows PC on your TV, with subtitles. No USB stick, no cables, no account.**
 
-![TV Share](docs/screenshot.png)
+![TV Share: your movies as a wall of posters](docs/screenshot.png)
 
 TV Share makes a folder on your PC (your *Videos* folder by default) show up on your TV, over your home Wi-Fi.
-Open VLC on the TV, pick your PC, and play.
+Open VLC on the TV, pick your PC, and play. On the PC, your movies appear as a dark, cinematic wall of posters.
+Each poster is a frame taken from the movie itself (the screenshot above shows the title covers used when there's no frame yet).
 
 It also fixes the most common annoyance: **subtitles that don't show up on the TV.** TV apps usually ignore separate
 `.srt` files when playing over the network. One click builds the subtitles *into* the movie file, with no re-encoding
@@ -28,9 +29,13 @@ Needs Windows 10 or 11, 64-bit.
 ## How to use it
 
 **On the PC**
-1. Open TV Share and click **Start sharing**.
+1. Open TV Share and turn on **Share with TV** (top right).
 2. If Windows asks whether to allow access on the network, click **Allow**.
 3. Keep the app open and the PC awake while you watch.
+
+The **?** button opens these steps inside the app, with your PC's name, folder and network.
+
+![The "Watch on your TV" panel](docs/screenshot-help.png)
 
 **On the TV**
 1. Install **VLC** from the TV's app store (free). Most smart TVs, Android TV / Google TV, Fire TV and game consoles have it.
@@ -41,9 +46,9 @@ VLC is the recommended player, but anything that can browse a "media server" (DL
 PlayStation media players, and many TVs' built-in media apps.
 
 **Subtitles**
-- Movies with subtitles already inside show **Subtitles built in**. Nothing to do.
-- Movies that came with `.srt` files (next to the movie or in a `Subs` folder) show an **Add subtitles** button.
-  Pick the language and click it. The new file is checked (same length, subtitle track present) before anything
+- Movies with subtitles already inside show **CC**. Nothing to do.
+- Movies that came with `.srt` files (next to the movie or in a `Subs` folder) show **SRT** and **+ Subtitles**.
+  Click it, or hover the poster to pick another language first. The new file is checked (same length, subtitle track present) before anything
   else happens. Then the original goes to the **Recycle Bin**, never deleted outright. You can turn that off in Settings.
 - Movie somewhere else (like Downloads)? Drag its folder onto the window to add subtitles. To watch it, move it into
   the shared folder.
@@ -65,6 +70,8 @@ PlayStation media players, and many TVs' built-in media apps.
 - Sharing only happens while the app is open and **Start sharing** is on. It works on your local network only,
   with nothing sent to the internet.
 - The only downloads are the two helpers below, from Windows' official package manager (winget).
+- Posters are made on your PC from a frame of each movie and cached in `%LOCALAPPDATA%\TV Share\posters`
+  (about 16 KB each). No titles are looked up online.
 - Settings are stored in `%APPDATA%\TV Share\settings.json`. To remove the app, uninstall it from *Installed apps*
   (or delete `TVShare.exe` if you used the portable version), then delete that folder if you want your settings gone too.
 
@@ -74,7 +81,10 @@ TV Share is a small (~11 MB) app built with [Wails](https://wails.io) (Go, with 
 WebView2), so it stays light even on older PCs. It drives two well-known open-source tools:
 
 - [**rclone**](https://rclone.org) (MIT) runs the media server (`rclone serve dlna`, read-only).
-- [**FFmpeg**](https://ffmpeg.org) (LGPL/GPL) copies video and audio unchanged into an MKV with the subtitles added.
+- [**FFmpeg**](https://ffmpeg.org) (LGPL/GPL) copies video and audio unchanged into an MKV with the subtitles added,
+  and takes the poster frames.
+
+The look uses fonts that ship with Windows (Bahnschrift and Segoe UI), so nothing is downloaded at runtime.
 
 Both are installed with winget (`Rclone.Rclone`, `Gyan.FFmpeg`). If you'd rather not use winget, put `rclone.exe`,
 `ffmpeg.exe` and `ffprobe.exe` next to `TVShare.exe` and the app will use them.
@@ -92,7 +102,7 @@ wails build -clean -trimpath
 ```
 
 The app ends up in `build/bin/TVShare.exe`. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.0.1 build/installer/tvshare.nsi`, which writes
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.1.0 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 

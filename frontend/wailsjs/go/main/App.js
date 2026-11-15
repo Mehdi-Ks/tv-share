@@ -14,6 +14,10 @@ export function ChooseFolder() {
   return window['go']['main']['App']['ChooseFolder']();
 }
 
+export function GetPoster(arg1) {
+  return window['go']['main']['App']['GetPoster'](arg1);
+}
+
 export function GetState() {
   return window['go']['main']['App']['GetState']();
 }

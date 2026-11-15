@@ -8,6 +8,8 @@ export function CancelSubtitles():Promise<void>;
 
 export function ChooseFolder():Promise<string>;
 
+export function GetPoster(arg1:string):Promise<string>;
+
 export function GetState():Promise<main.State>;
 
 export function InstallDeps():Promise<main.DepsStatus>;

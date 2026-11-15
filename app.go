@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.0.1"
+const appVersion = "1.1.0"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().
@@ -295,6 +295,12 @@ func (a *App) AddSubtitles(video, subPath string) (PrepareResult, error) {
 }
 
 func (a *App) CancelSubtitles() { a.prep.Cancel() }
+
+// GetPoster returns a poster image (a frame from the movie) as a data: URL,
+// or an error when no frame can be taken; the page then draws a title cover.
+func (a *App) GetPoster(video string) (string, error) {
+	return posterDataURL(video)
+}
 
 // ---- Small helpers for the page ----------------------------------------------------------
 

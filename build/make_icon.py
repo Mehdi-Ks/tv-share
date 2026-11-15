@@ -8,9 +8,9 @@ SS = 4  # supersample for smooth edges
 W = S * SS
 img = Image.new("RGBA", (W, W), (0, 0, 0, 0))
 
-# Background: rounded square with a vertical gradient (indigo -> blue)
+# Background: charcoal rounded square with a soft vertical gradient
 grad = Image.new("RGBA", (W, W))
-top, bot = (88, 110, 255), (46, 72, 230)
+top, bot = (46, 44, 40), (17, 17, 17)
 gd = ImageDraw.Draw(grad)
 for y in range(W):
     t = y / (W - 1)
@@ -20,7 +20,7 @@ ImageDraw.Draw(mask).rounded_rectangle([0, 0, W - 1, W - 1], radius=int(W * 0.22
 img.paste(grad, (0, 0), mask)
 
 d = ImageDraw.Draw(img)
-white = (255, 255, 255, 255)
+white = (245, 182, 56, 255)  # warm amber glyph
 u = W / 32  # same grid as the in-app logo
 lw = int(2.4 * u)
 # screen
