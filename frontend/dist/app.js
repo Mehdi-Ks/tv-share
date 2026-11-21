@@ -444,7 +444,8 @@ $("sortSel").value = sortBy;
 async function loadMovies() {
   $("moviesSub").textContent = "Looking for movies…";
   try {
-    movies = await api().ListMovies();
+    // A movie with no subtitle files at all must still get a list, never null.
+    movies = ((await api().ListMovies()) || []).map((m) => ({ ...m, subs: m.subs || [] }));
   } catch (e) {
     movies = [];
     toast(errText(e), true);

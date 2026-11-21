@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.2 (2026-11-21)
+
+- **Fixed: the movie list stayed on "Looking for movies…"** when a movie had no subtitles at all (none built in
+  and no .srt file next to it). The whole list failed to appear, not just that movie. Bug since 1.2.0.
+
 ## 1.6.1 (2026-11-15)
 
 - French wording proofread with DeepL Write: clearer subtitle and error messages ("intégrez-les au film",

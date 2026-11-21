@@ -103,6 +103,9 @@ func describeMovie(p, root, prefLang string) Movie {
 	}
 	m.HasSubs = hasEmbeddedSubs(p)
 	m.Subs = findSubs(p)
+	if m.Subs == nil {
+		m.Subs = []SubOption{} // send [] rather than null: the page expects a list
+	}
 	sortSubs(m.Subs, prefLang)
 	m.DefaultSub = 0
 	return m

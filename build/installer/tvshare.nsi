@@ -5,7 +5,7 @@ Unicode true
 SetCompressor /SOLID lzma
 
 !ifndef VERSION
-  !define VERSION "1.6.1"
+  !define VERSION "1.6.2"
 !endif
 !define APPNAME "TV Share"
 !define EXE "TVShare.exe"

@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.6.1"
+const appVersion = "1.6.2"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -164,5 +166,18 @@ func TestFirstName(t *testing.T) {
 		if got := firstName(in); got != want {
 			t.Errorf("firstName(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+// A movie with no subtitles anywhere must send "subs": [] (not null), or the page breaks.
+func TestNoSubsIsEmptyList(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "Plain Movie (2021).mp4")
+	if err := os.WriteFile(p, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := json.Marshal(describeMovie(p, dir, "eng"))
+	if !strings.Contains(string(b), `"subs":[]`) {
+		t.Fatalf("subs should be an empty list: %s", b)
 	}
 }
