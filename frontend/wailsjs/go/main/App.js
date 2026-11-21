@@ -26,6 +26,10 @@ export function FinishSetup(arg1, arg2) {
   return window['go']['main']['App']['FinishSetup'](arg1, arg2);
 }
 
+export function FixSubtitleSync(arg1, arg2) {
+  return window['go']['main']['App']['FixSubtitleSync'](arg1, arg2);
+}
+
 export function GetBackdrop(arg1) {
   return window['go']['main']['App']['GetBackdrop'](arg1);
 }

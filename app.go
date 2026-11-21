@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.6.2"
+const appVersion = "1.7.0"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().
@@ -253,6 +253,8 @@ func (a *App) SetOption(key string, value bool) error {
 	switch key {
 	case "autoStartShare":
 		return a.updateSettings(func(s *Settings) { s.AutoStartShare = value })
+	case "autoSync":
+		return a.updateSettings(func(s *Settings) { s.NoAutoSync = !value })
 	case "recycleOriginal":
 		return a.updateSettings(func(s *Settings) { s.RecycleOriginal = value })
 	case "launchAtLogin":
@@ -367,15 +369,25 @@ func (a *App) AddSubtitles(video, subPath string) (PrepareResult, error) {
 	if sub == nil {
 		return PrepareResult{}, fmt.Errorf("that subtitle file is gone")
 	}
+	return a.prep.Prepare(video, *sub, m.Title, s.RecycleOriginal, !s.NoAutoSync, a.progressFor(video))
+}
+
+// progressFor sends "prepare:progress" events for one movie, only when the number or step changes.
+func (a *App) progressFor(video string) func(float64, string) {
 	lastPct, lastStage := -1, ""
-	return a.prep.Prepare(video, *sub, m.Title, s.RecycleOriginal, func(pct float64, stage string) {
-		// Only tell the page when the number or the step changes: fewer, calmer updates.
+	return func(pct float64, stage string) {
 		if int(pct) == lastPct && stage == lastStage {
 			return
 		}
 		lastPct, lastStage = int(pct), stage
 		runtime.EventsEmit(a.ctx, "prepare:progress", map[string]interface{}{"path": video, "percent": pct, "stage": stage})
-	})
+	}
+}
+
+// FixSubtitleSync re-times the subtitles inside a movie. shiftMs == 0 matches them to the sound
+// automatically; otherwise it moves them by that much (negative = earlier).
+func (a *App) FixSubtitleSync(video string, shiftMs int) (PrepareResult, error) {
+	return a.prep.FixSync(video, shiftMs == 0, shiftMs, a.Settings().RecycleOriginal, a.progressFor(video))
 }
 
 func (a *App) CancelSubtitles() { a.prep.Cancel() }

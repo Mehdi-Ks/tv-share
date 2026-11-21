@@ -39,6 +39,7 @@ app shows frames from the movies instead, which is fine for most work. To test p
 | `movies.go` | Finds movies and subtitle files, builds subtitles into movies |
 | `poster.go`, `info.go`, `tmdb.go` | Posters (movie frames or TMDB), file details, TMDB lookups |
 | `deps.go`, `download.go` | Installing the helpers (winget, or a checked direct download) |
+| `subsync.go` | Subtitle sync: alass against the sound, manual shifts, re-timing subtitles inside a movie |
 | `settings.go`, `winutil.go` | Settings file, Windows-specific bits |
 | `build/installer/tvshare.nsi` | The installer (NSIS) |
 

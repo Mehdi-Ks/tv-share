@@ -352,6 +352,7 @@ func sortSubs(subs []SubOption, pref string) {
 type PrepareResult struct {
 	Output   string `json:"output"`
 	Recycled bool   `json:"recycled"`
+	SyncNote string `json:"syncNote"` // what subtitle sync changed, in plain words ("" when it didn't run)
 }
 
 type Preparer struct {
@@ -375,7 +376,7 @@ func (pr *Preparer) Cancel() {
 
 // Prepare copies video + audio unchanged into an MKV with the chosen subtitles inside,
 // checks the result, then (optionally) sends the original to the Recycle Bin.
-func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle bool, progress func(pct float64, stage string)) (PrepareResult, error) {
+func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle, syncSubs bool, progress func(pct float64, stage string)) (PrepareResult, error) {
 	var res PrepareResult
 	ffmpeg, ffprobe := toolFFmpeg.find(), toolFFprobe.find()
 	if ffmpeg == "" || ffprobe == "" {
@@ -383,6 +384,10 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle b
 	}
 	if !fileExists(video) || !fileExists(sub.Path) {
 		return res, fmt.Errorf("the movie or subtitle file is gone")
+	}
+	if syncSubs && ensureAlass(progress) != nil {
+		syncSubs = false // no sync helper (offline?): add the subtitles as they are
+		res.SyncNote = "Couldn't get the sync helper, so the subtitles were added as they are."
 	}
 
 	pr.mu.Lock()
@@ -414,10 +419,22 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle b
 
 	duration := probeDuration(ffprobe, video)
 
-	enc := "UTF-8"
-	if b, err := os.ReadFile(sub.Path); err == nil && !utf8.Valid(b) {
-		enc = "CP1252"
+	subPath := sub.Path
+	if syncSubs {
+		synced := strings.TrimSuffix(tmp, ".partial.mkv") + ".synced.srt"
+		defer os.Remove(synced)
+		sum, err := runAlass(ctx, video, sub.Path, synced, scaled(progress, 0, 40, "Matching the subtitles to the sound…"))
+		switch {
+		case err != nil && ctx.Err() != nil:
+			return res, fmt.Errorf("cancelled")
+		case err != nil:
+			res.SyncNote = "Couldn't match the subtitles to the sound, so they were added as they are."
+		default:
+			subPath, res.SyncNote = synced, sum.String()
+		}
 	}
+
+	enc := srtEncoding(subPath)
 	langCode := sub.Lang
 	if langCode == "" {
 		langCode = "und"
@@ -429,7 +446,7 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle b
 
 	cmd := hiddenCmd(ffmpeg, "-hide_banner", "-nostats", "-loglevel", "error", "-y",
 		"-i", video,
-		"-sub_charenc", enc, "-i", sub.Path,
+		"-sub_charenc", enc, "-i", subPath,
 		"-map", "0:v", "-map", "0:a?", "-map", "1:0",
 		"-c", "copy", "-c:s", "srt",
 		"-metadata:s:s:0", "language="+langCode,
@@ -445,7 +462,11 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle b
 		return res, err
 	}
 	attachToJob(cmd.Process)
-	progress(0, "Building the subtitles in…")
+	base := 0.0
+	if syncSubs {
+		base = 40
+	}
+	progress(base, "Building the subtitles in…")
 	go func() {
 		<-ctx.Done()
 		if cmd.Process != nil {
@@ -458,9 +479,10 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle b
 		line := sc.Text()
 		if strings.HasPrefix(line, "out_time_us=") && duration > 0 {
 			if us, err := strconv.ParseFloat(strings.TrimPrefix(line, "out_time_us="), 64); err == nil {
-				pct := math.Min(99, us/1e6/duration*100)
+				f := math.Min(1, us/1e6/duration)
+				pct := math.Min(99, base+(99-base)*f)
 				stage := "Building the subtitles in…"
-				if pct >= 90 {
+				if f >= 0.9 {
 					// Windows is still writing the last part of the file to disk; this can take a while.
 					stage = "Finishing the file…"
 				}

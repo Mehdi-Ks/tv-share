@@ -60,6 +60,9 @@ PlayStation media players, and many TVs' built-in media apps.
 - Movies that came with `.srt` files (next to the movie or in a `Subs` folder) show **SRT** and **+ Subtitles**.
   Click it, or open the movie (click its poster) to pick another language first. The **Can get subtitles** filter lists them all. The new file is checked (same length, subtitle track present) before anything
   else happens. Then the original goes to the **Recycle Bin**, never deleted outright. You can turn that off in Settings.
+- **Out of sync with the voices?** Adding subtitles lines them up with the movie's sound automatically (it fixes
+  delays, subtitles made for a different frame rate, and different cuts). For subtitles already inside a movie,
+  open it and click **Fix sync**, or move them **Earlier** / **Later** yourself.
 - Movie somewhere else (like Downloads)? Drag its folder onto the window to add subtitles. To watch it, move it into
   the shared folder.
 
@@ -73,14 +76,16 @@ PlayStation media players, and many TVs' built-in media apps.
 | Playback stops after a while | The PC went to sleep. Keep it plugged in and set sleep to *Never* while on power. |
 | "Port already in use" | Another copy of the share is running. Close it, or restart the PC. |
 | Subtitles still don't show | In VLC, open the subtitle menu during playback and pick the track. |
+| Subtitles are early, late, or drift | Open the movie in TV Share and click **Fix sync**. If they're still a little off, use **Earlier** / **Later**. |
 
 ## Privacy and safety
 
 - The TV can **only read** the folder you choose. Nothing on your PC can be changed or deleted from the network.
 - Sharing only happens while the app is open and **Share with TV** is on. It works on your local network only,
   with nothing sent to the internet.
-- The only downloads are the two helpers below: from Windows' package manager (winget) when the PC has it,
-  otherwise straight from rclone.org and gyan.dev, checked against the checksums those sites publish.
+- The only downloads are the helpers below: rclone and FFmpeg from Windows' package manager (winget) when the PC
+  has it, otherwise straight from rclone.org and gyan.dev, checked against the checksums those sites publish; and
+  alass, only the first time you sync subtitles, from its GitHub release, checked against a pinned fingerprint.
 - **Posters are your choice.** *Movie frames*: made on your PC from a frame of each movie, nothing looked up online.
   *Official posters*: each movie's title and year are sent to TMDB to fetch its poster, plot and rating; nothing
   else is sent. You choose on first run and can change it in Settings. Both are cached in
@@ -91,9 +96,10 @@ PlayStation media players, and many TVs' built-in media apps.
 ## What's under the hood
 
 TV Share is a small (~11 MB) app built with [Wails](https://wails.io) (Go, with the window drawn by Windows' built-in
-WebView2), so it stays light even on older PCs. It drives two well-known open-source tools:
+WebView2), so it stays light even on older PCs. It drives three well-known open-source tools:
 
 - [**rclone**](https://rclone.org) (MIT) runs the media server (`rclone serve dlna`, read-only).
+- [**alass**](https://github.com/kaegi/alass) (GPL-3.0) lines subtitles up with the movie's sound.
 - [**FFmpeg**](https://ffmpeg.org) (LGPL/GPL) copies video and audio unchanged into an MKV with the subtitles added,
   and takes the poster frames.
 
@@ -127,7 +133,7 @@ The app ends up in `build/bin/TVShare.exe`. Official posters need a TMDB key: ge
 [themoviedb.org](https://www.themoviedb.org/settings/api) and paste it in the app's Settings, or put it in
 `build/tmdb.key` (one line, never committed) and build with `build.ps1`, which builds it into the app and also
 makes the installer. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.6.2 build/installer/tvshare.nsi`, which writes
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.7.0 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 

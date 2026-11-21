@@ -14,6 +14,8 @@ export function FindTMDBMatches(arg1:string,arg2:string):Promise<Array<main.TMDB
 
 export function FinishSetup(arg1:string,arg2:string):Promise<void>;
 
+export function FixSubtitleSync(arg1:string,arg2:number):Promise<main.PrepareResult>;
+
 export function GetBackdrop(arg1:string):Promise<string>;
 
 export function GetMovieInfo(arg1:string):Promise<main.MovieInfo>;

@@ -106,6 +106,7 @@ function render() {
   $("optAutoStart").checked = s.settings.autoStartShare;
   $("optLogin").checked = s.settings.launchAtLogin;
   $("optRecycle").checked = s.settings.recycleOriginal;
+  $("optSync").checked = !s.settings.noAutoSync;
   $("versionText").textContent = `TV Share ${s.version} · free and open source`;
 }
 
@@ -330,7 +331,7 @@ $("settingsBtn").addEventListener("click", async () => {
   sel.value = state.settings.subLang;
   $("settingsDlg").showModal();
 });
-for (const [id, key] of [["optAutoStart", "autoStartShare"], ["optLogin", "launchAtLogin"], ["optRecycle", "recycleOriginal"]]) {
+for (const [id, key] of [["optAutoStart", "autoStartShare"], ["optLogin", "launchAtLogin"], ["optRecycle", "recycleOriginal"], ["optSync", "autoSync"]]) {
   $(id).addEventListener("change", async (ev) => {
     try {
       await api().SetOption(key, ev.target.checked);
@@ -736,7 +737,7 @@ function renderDetailSubs(m) {
   if (preparing === m.path) {
     box.append(el("div", { class: "inline-progress", "data-path": m.path },
       el("div", { class: "ring" }, el("span", { text: "0%" })),
-      el("div", {}, el("p", { class: "stage", text: "Building the subtitles in…" }),
+      el("div", {}, el("p", { class: "stage", text: "Starting…" }),
         el("p", { class: "muted small", text: "You can keep using the app. Big movies take a minute or two." }),
         el("button", { class: "link-btn", style: "margin-left:0", text: "Cancel", onclick: () => api().CancelSubtitles() }))));
     return;
@@ -746,6 +747,17 @@ function renderDetailSubs(m) {
       el("p", { id: "dSubsBuilt" }));
     const i = infoCache.get(m.path);
     if (i && i.subtitles.length) $("dSubsBuilt").textContent = "Languages: " + [...new Set(i.subtitles)].join(", ");
+    const amount = el("select", { "aria-label": "How much to move the subtitles" });
+    for (const s of [0.5, 1, 2, 5]) amount.append(el("option", { value: s * 1000, text: `${s} s`, selected: s === 1 }));
+    const busyNow = preparing !== null;
+    box.append(el("div", { class: "sync-box" },
+      el("p", { class: "muted small", text: "Subtitles out of sync with the voices? TV Share can match them to the sound." }),
+      el("div", { class: "sub-row" },
+        el("button", { class: "btn btn-ghost", disabled: busyNow, onclick: () => fixSync(m, 0) }, icon("i-refresh"), document.createTextNode("Fix sync"))),
+      el("div", { class: "sub-row nudge" },
+        el("span", { class: "muted small", text: "Or move them yourself:" }), amount,
+        el("button", { class: "btn btn-ghost", disabled: busyNow, onclick: () => fixSync(m, -Number(amount.value)) }, document.createTextNode("Earlier")),
+        el("button", { class: "btn btn-ghost", disabled: busyNow, onclick: () => fixSync(m, Number(amount.value)) }, document.createTextNode("Later")))));
     return;
   }
   if (!m.subs.length) {
@@ -781,6 +793,27 @@ async function addSubtitles(m, subPath) {
     toast(res.recycled
       ? `Subtitles added to “${m.title}”. The original is in the Recycle Bin.`
       : `Subtitles added to “${m.title}”.`);
+    if (res.syncNote) toast(res.syncNote, false, 7000);
+    if (detailMovie && detailMovie.path === m.path && res.output) detailMovie = { ...detailMovie, path: res.output };
+  } catch (e) {
+    const msg = errText(e);
+    if (msg !== "cancelled") toast(msg, true, 7000);
+  } finally {
+    preparing = null;
+    loadMovies();
+  }
+}
+
+// Re-time the subtitles inside a movie: shiftMs 0 = match to the sound, otherwise move by that much.
+async function fixSync(m, shiftMs) {
+  preparing = m.path;
+  document.querySelectorAll(".card-meta .add, #dSubs .btn").forEach((b) => (b.disabled = true));
+  const card = cardFor(m.path);
+  if (card) showBusy(card.querySelector(".poster"));
+  if (detailMovie && detailMovie.path === m.path) renderDetailSubs(m);
+  try {
+    const res = await api().FixSubtitleSync(m.path, shiftMs);
+    toast(res.syncNote || "Subtitles updated.", false, 7000);
     if (detailMovie && detailMovie.path === m.path && res.output) detailMovie = { ...detailMovie, path: res.output };
   } catch (e) {
     const msg = errText(e);

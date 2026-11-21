@@ -243,6 +243,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .detail-section p { color: var(--muted); font-size: 14px; }
 .sub-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .sub-row select { height: 40px; min-width: 180px; }
+.sync-box { margin-top: 14px; display: grid; gap: 8px; }
+.sync-box .sub-row { margin-top: 0; }
+.nudge select { height: 36px; min-width: 0; }
 .sub-state { display: flex; align-items: center; gap: 7px; color: var(--ok); font-weight: 600; }
 .sub-state svg { width: 16px; height: 16px; }
 .inline-progress { display: flex; align-items: center; gap: 14px; margin-top: 10px; }

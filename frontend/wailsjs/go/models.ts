@@ -155,6 +155,7 @@ export namespace main {
 	export class PrepareResult {
 	    output: string;
 	    recycled: boolean;
+	    syncNote: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new PrepareResult(source);
@@ -164,6 +165,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.output = source["output"];
 	        this.recycled = source["recycled"];
+	        this.syncNote = source["syncNote"];
 	    }
 	}
 	export class Settings {
@@ -177,6 +179,7 @@ export namespace main {
 	    setupDone: boolean;
 	    tmdb: string;
 	    tmdbKey: string;
+	    noAutoSync: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -194,6 +197,7 @@ export namespace main {
 	        this.setupDone = source["setupDone"];
 	        this.tmdb = source["tmdb"];
 	        this.tmdbKey = source["tmdbKey"];
+	        this.noAutoSync = source["noAutoSync"];
 	    }
 	}
 	export class TMDBState {

@@ -150,6 +150,25 @@
     "Start sharing when the app opens": "Partager dès l'ouverture de l'app",
     "Saves a click every time.": "Un clic de moins à chaque fois.",
     "Open with Windows": "Lancer avec Windows",
+    "Match subtitles to the sound": "Caler les sous-titres sur le son",
+    "When adding subtitles, line them up with the voices automatically. Takes about 30 seconds more.": "À l'ajout des sous-titres, les aligner automatiquement sur les voix. Environ 30 secondes de plus.",
+    "After subtitles are added or re-timed and the new file checks out. Saves disk space.": "Une fois les sous-titres ajoutés ou recalés et le nouveau fichier vérifié. Libère de l'espace disque.",
+    "Subtitles out of sync with the voices? TV Share can match them to the sound.": "Sous-titres décalés par rapport aux voix ? TV Share peut les caler sur le son.",
+    "Fix sync": "Recaler",
+    "Or move them yourself:": "Ou décalez-les vous-même :",
+    "How much to move the subtitles": "De combien décaler les sous-titres",
+    "Earlier": "Plus tôt",
+    "Later": "Plus tard",
+    "Subtitles updated.": "Sous-titres mis à jour.",
+    "Reading the subtitles…": "Lecture des sous-titres…",
+    "Matching the subtitles to the sound…": "Alignement des sous-titres sur le son…",
+    "Getting the sync helper…": "Téléchargement de l'outil de synchronisation…",
+    "The subtitles already matched the sound.": "Les sous-titres étaient déjà calés sur le son.",
+    "The subtitles were matched to the sound.": "Les sous-titres ont été calés sur le son.",
+    "Couldn't get the sync helper, so the subtitles were added as they are.": "Impossible d'obtenir l'outil de synchronisation : les sous-titres ont été ajoutés tels quels.",
+    "Couldn't match the subtitles to the sound, so they were added as they are.": "Impossible de caler les sous-titres sur le son : ils ont été ajoutés tels quels.",
+    "couldn't match the subtitles to the sound": "impossible de caler les sous-titres sur le son",
+    "the sync helper is not installed": "l'outil de synchronisation n'est pas installé",
     "Starts quietly in the background when you sign in.": "Démarre discrètement en arrière-plan à l'ouverture de session.",
     "Move the original to the Recycle Bin": "Envoyer l'original à la Corbeille",
     "After subtitles are added and the new file checks out. Saves disk space.": "Une fois les sous-titres ajoutés et le nouveau fichier vérifié. Libère de l'espace disque.",
@@ -190,6 +209,20 @@
     [/^(\d+) movies?$/, (m, n) => `${n} film${n > 1 ? "s" : ""}`],
     [/^(\d+) movies?, (\d+) can get subtitles$/, (m, n, k) => `${n} film${n > 1 ? "s" : ""}, ${k} à sous-titrer`],
     [/^(\d+) movies? found$/, (m, n) => `${n} film${n > 1 ? "s" : ""} trouvé${n > 1 ? "s" : ""}`],
+    // Sync results: "Fixed subtitles made for a different frame rate, moved them 1.7 s later, in 2 parts."
+    [/^(Fixed subtitles made for a different frame rate)?(?:, )?(?:[Mm]oved them ([\d.]+) s (earlier|later))?(?:, in (\d+) parts)?\.(?: Subtitles moved ([\d.]+) s (earlier|later)\.)?$/,
+      (m, fps, s1, d1, parts, s2, d2) => {
+        const out = [];
+        if (fps) out.push("cadence d'images corrigée");
+        if (s1) out.push(`sous-titres décalés de ${s1.replace(".", ",")} s plus ${d1 === "later" ? "tard" : "tôt"}`);
+        if (parts) out.push(`en ${parts} parties`);
+        let t = out.length ? out.join(", ") + "." : "";
+        if (s2) t = (t ? t + " " : "") + `Sous-titres décalés de ${s2.replace(".", ",")} s plus ${d2 === "later" ? "tard" : "tôt"}.`;
+        return t ? t.charAt(0).toUpperCase() + t.slice(1) : null;
+      }],
+    [/^Subtitles moved ([\d.]+) s (earlier|later)\.$/, (m, s, d) => `Sous-titres décalés de ${s.replace(".", ",")} s plus ${d === "later" ? "tard" : "tôt"}.`],
+    [/^([\d.]+) s$/, (m, s) => `${s.replace(".", ",")} s`],
+    [/^couldn't read the subtitles in this movie: ?(.*)$/, (m, e) => `impossible de lire les sous-titres de ce film${e ? " : " + e : ""}`],
     [/^(\d+(?:\.\d)?) GB$/, (m, n) => `${n.replace(".", ",")} Go`],
     [/^(\d+) MB$/, (m, n) => `${n} Mo`],
     [/^On · TV sees “(.+)”$/, (m, n) => `Activé · la TV voit « ${n} »`],
@@ -197,7 +230,7 @@
     [/^Rated (\d+\.\d)$/, (m, r) => `Note ${r.replace(".", ",")}`],
     [/^TMDB rating from (\d+) votes$/, (m, n) => `Note TMDB sur ${n} votes`],
     [/^Languages: (.+)$/, (m, l) => `Langues : ${langList(l)}`],
-    [/^Downloading (\S+)… (\d+)%$/, (m, w, p) => `Téléchargement de ${w}… ${p} %`],
+    [/^Downloading (\S+)… (\d+)%$/, (m, w, p) => `Téléchargement ${/^[aeiouy]/i.test(w) ? "d'" : "de "}${w}… ${p} %`],
     [/^Unpacking (\S+)…$/, (m, w) => `Décompression de ${w}…`],
     [/^In VLC, go to Browse, then Local network, then “(.+)”\.$/, (m, n) => `Dans VLC, allez dans Navigation, puis Réseau local, puis « ${n} ».`],
     [/^Subtitles added to “(.+)”\. The original is in the Recycle Bin\.$/, (m, t) => `Sous-titres ajoutés à « ${t} ». L'original est dans la Corbeille.`],

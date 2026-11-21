@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.0 (2026-11-21)
+
+- **Subtitles in sync with the voices.** When you add subtitles, TV Share now listens to the movie's sound and
+  lines them up: it fixes a constant delay, subtitles made for a different frame rate (they drift further off as
+  the movie goes on), and subtitles made for a different cut. It says what it changed, for example
+  "Fixed subtitles made for a different frame rate, moved them 1.7 s later." About 30 seconds more; switch it off
+  in Settings.
+- **Fix sync** on a movie's page re-times subtitles that are already inside the movie. Or move them yourself:
+  **Earlier** / **Later** by 0.5 to 5 seconds. The new file is checked before the original is replaced.
+- Uses [alass](https://github.com/kaegi/alass) (GPL-3.0), downloaded the first time sync is used (26 MB, from its
+  GitHub release, checked against a pinned fingerprint). It uses TV Share's own FFmpeg.
+
 ## 1.6.2 (2026-11-21)
 
 - **Fixed: the movie list stayed on "Looking for movies…"** when a movie had no subtitles at all (none built in

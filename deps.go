@@ -41,6 +41,9 @@ func (t tool) find() string {
 		return p
 	}
 	// 3. Where winget installs things (PATH changes need a restart, so look directly)
+	if t.pkgGlob == "" {
+		return ""
+	}
 	local := os.Getenv("LOCALAPPDATA")
 	if local != "" {
 		link := filepath.Join(local, "Microsoft", "WinGet", "Links", t.exe)

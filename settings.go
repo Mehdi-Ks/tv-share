@@ -20,7 +20,8 @@ type Settings struct {
 	SubLang         string `json:"subLang"`
 	SetupDone       bool   `json:"setupDone"` // the first-run "Where are your movies?" screen was completed
 	TMDB            string `json:"tmdb"`      // official posters: "" = not asked yet, "on", "off"
-	TMDBKey         string `json:"tmdbKey"`   // the user's own TMDB key (optional; release builds have one)
+	TMDBKey         string `json:"tmdbKey"`
+	NoAutoSync      bool   `json:"noAutoSync"` // true = don't match added subtitles to the sound   // the user's own TMDB key (optional; release builds have one)
 }
 
 func defaultSettings() Settings {
