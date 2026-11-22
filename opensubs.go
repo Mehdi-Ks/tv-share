@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -190,7 +191,8 @@ func osError(status int, body []byte) error {
 }
 
 // search lists subtitles for a movie file, exact matches first.
-func (c *osClient) search(video, title, year, lang string) ([]OSResult, error) {
+// search lists subtitles for a movie, or for one episode when season and episode are set.
+func (c *osClient) search(video, title, year, lang string, season, episode int) ([]OSResult, error) {
 	q := url.Values{}
 	if l := osLangCodes[lang]; l != "" {
 		q.Set("languages", strings.ToLower(l))
@@ -200,8 +202,12 @@ func (c *osClient) search(video, title, year, lang string) ([]OSResult, error) {
 		q.Set("moviehash", hash)
 	}
 	q.Set("query", strings.ToLower(title))
-	if year != "" {
+	if year != "" && episode == 0 {
 		q.Set("year", year)
+	}
+	if episode > 0 {
+		q.Set("season_number", strconv.Itoa(season))
+		q.Set("episode_number", strconv.Itoa(episode))
 	}
 	var r struct {
 		Data []struct {

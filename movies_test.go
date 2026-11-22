@@ -122,6 +122,11 @@ func TestPrepareEndToEnd(t *testing.T) {
 	if err != nil || filepath.Base(res2.Output) != "Test Film (2024) (with subtitles).mkv" {
 		t.Fatalf("second run: %v %q", err, res2.Output)
 	}
+	// A third run must not overwrite the second one either
+	res3, err := (&Preparer{}).Prepare(video, subs[1], title, false, false, func(float64, string) {})
+	if err != nil || filepath.Base(res3.Output) != "Test Film (2024) (with subtitles 2).mkv" {
+		t.Fatalf("third run: %v %q", err, res3.Output)
+	}
 	if matches, _ := filepath.Glob(filepath.Join(dir, "*.partial.mkv")); len(matches) != 0 {
 		t.Fatalf("leftover temp files: %v", matches)
 	}

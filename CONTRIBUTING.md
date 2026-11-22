@@ -40,6 +40,8 @@ app shows frames from the movies instead, which is fine for most work. To test p
 | `app.go` | Everything the window can call (`window.go.main.App.*`) |
 | `share.go` | Starts and stops `rclone serve dlna` |
 | `movies.go` | Finds movies and subtitle files, builds subtitles into movies |
+| `shows.go`, `app_shows.go` | Recognises episodes and extras, TV show lookups for the window |
+| `play.go` | Play on this PC (default player, VLC fallback) |
 | `poster.go`, `info.go`, `tmdb.go` | Posters (movie frames or TMDB), file details, TMDB lookups |
 | `deps.go`, `download.go` | Installing the helpers (winget, or a checked direct download) |
 | `opensubs.go` | Finding and downloading subtitles on OpenSubtitles.com, sign-in |

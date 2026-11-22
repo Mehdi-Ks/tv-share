@@ -59,6 +59,14 @@ The **?** button opens these steps inside the app. Your PC's name on the TV, the
 VLC is the recommended player, but anything that can browse a "media server" (DLNA/UPnP) works: Kodi, Xbox and
 PlayStation media players, and many TVs' built-in media apps.
 
+**TV shows**
+- Episodes named like `Show - S01E03 - Title.mkv`, `show.1x03.mkv` or kept in a `Season 1` folder are grouped into
+  one card per show. Its page lists the episodes by season; click one for its subtitles and details, or play it.
+- Subtitle files next to the episodes? **Add to all episodes** does the whole season, one episode after another.
+- Extras (in a `Featurettes`, `Extras`, `Deleted Scenes`, `Trailers`... folder) are listed on the show's or movie's
+  page instead of on the home screen.
+- If the app guesses wrong, use **Not a show? Show these as movies** or **This is a TV episode**.
+
 **Subtitles**
 - Movies with subtitles already inside show **CC**. Nothing to do.
 - Movies that came with `.srt` files (next to the movie or in a `Subs` folder) show **SRT** and **+ Subtitles**.
@@ -94,8 +102,8 @@ PlayStation media players, and many TVs' built-in media apps.
   has it, otherwise straight from rclone.org and gyan.dev, checked against the checksums those sites publish; and
   alass, only the first time you sync subtitles, from its GitHub release, checked against a pinned fingerprint.
 - **Posters are your choice.** *Movie frames*: made on your PC from a frame of each movie, nothing looked up online.
-  *Official posters*: each movie's title and year are sent to TMDB to fetch its poster, plot and rating; nothing
-  else is sent. You choose on first run and can change it in Settings. Both are cached in
+  *Official posters*: each movie's or show's title and year are sent to TMDB to fetch its poster, plot and rating
+  (and, for shows, the season's episode names and pictures); nothing else is sent. You choose on first run and can change it in Settings. Both are cached in
   `%LOCALAPPDATA%\TV Share` (TMDB data is refreshed every 3 months).
 - **Subtitles online are only searched when you click.** A search sends the movie file's fingerprint (computed from
   its size and first and last 64 KB) and the movie's title and year to OpenSubtitles.com. If you sign in, your

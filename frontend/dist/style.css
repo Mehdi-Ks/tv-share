@@ -222,6 +222,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .detail::backdrop { background: var(--bg); }
 .detail-bg { position: absolute; inset: 0; background-size: cover; background-position: center 30%; opacity: 0; transition: opacity 400ms ease; }
 .detail-bg.loaded { opacity: .55; }
+#showBg.loaded { opacity: .32; } /* a show page is a long list: keep the picture quieter behind it */
 .detail-bg::after {
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(90deg, var(--bg) 0%, rgba(17,17,17,.92) 34%, rgba(17,17,17,.35) 75%, rgba(17,17,17,.55) 100%),
@@ -239,6 +240,49 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .overview { max-width: 62ch; margin: -12px 0 14px; color: #dcd8d0; font-size: 15px; line-height: 1.55; }
 .source { margin: 0 0 22px; color: var(--muted); font-size: 12.5px; }
 .detail-section { padding: 16px 0; border-top: 1px solid var(--border); }
+.eyebrow { display: flex; flex-wrap: wrap; gap: 0 10px; margin-bottom: 6px; color: var(--accent); font-size: 13.5px; font-weight: 600; letter-spacing: .01em; }
+.eyebrow span + span::before { content: "·"; margin-right: 10px; color: var(--muted); }
+.kind-link { margin: 18px 0 0; font-weight: 500; color: var(--muted); }
+
+/* ---------- A show's episodes ---------- */
+.ep-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.ep-head h3 { margin: 0; }
+.season-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.season-chips .chip { height: 30px; font-size: 12.5px; }
+.ep-list, .extra-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ep { position: relative; display: flex; align-items: center; gap: 6px; border-radius: var(--radius); }
+.ep-open {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; padding: 8px; border: 0; border-radius: var(--radius);
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms var(--ease-out);
+}
+.ep-open:active { transform: scale(.99); }
+.ep-still { flex: none; width: 128px; aspect-ratio: 16 / 9; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+.ep-still img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 240ms ease; }
+.ep-still img.loaded { opacity: 1; }
+.ep-text { min-width: 0; display: grid; gap: 2px; }
+.ep-text strong { font-weight: 600; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ep-num { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 6px; }
+.ep-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; color: var(--muted); font-size: 12.5px; }
+.ep-sub .ok { color: var(--ok); display: inline-flex; align-items: center; gap: 3px; }
+.ep-sub .ok svg { width: 12px; height: 12px; }
+.ep-sub .srt { color: var(--accent); }
+.ep-play { flex: none; }
+.ep-play svg { width: 16px; height: 16px; }
+.ep-busy { display: flex; align-items: center; gap: 10px; padding-right: 8px; color: var(--muted); font-size: 12.5px; }
+.ep-busy .ring { width: 36px; height: 36px; }
+.ep-busy .ring span { width: 28px; height: 28px; font-size: 10.5px; background: var(--bg); }
+.extra {
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 9px 10px; border: 0; border-radius: var(--radius);
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background-color 160ms ease;
+}
+.extra svg { width: 14px; height: 14px; color: var(--accent); }
+.extra span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.extra:active { transform: scale(.99); }
+.batch-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+@media (hover: hover) and (pointer: fine) {
+  .ep-open:hover, .extra:hover { background: rgba(255, 255, 255, .05); }
+}
 .detail-section h3 { font-size: 15px; margin-bottom: 8px; }
 .detail-section p { color: var(--muted); font-size: 14px; }
 .sub-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
@@ -447,3 +491,6 @@ select { cursor: pointer; }
   .card:hover .poster { transform: none; }
   .check.spinning { animation-duration: 2s; }
 }
+
+/* The show page changes height with each season: keep it anchored at the top so it doesn't jump. */
+#showPage .detail-body { align-content: start; }

@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.8.2"
+const appVersion = "1.9.0"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().
@@ -30,6 +30,7 @@ type App struct {
 
 func NewApp() *App {
 	a := &App{settings: loadSettings(), share: &Share{}, prep: &Preparer{}, tmdb: newTMDB()}
+	setKindOverrides(a.settings.Kinds)
 	a.tmdb.setKey(a.tmdbKey())
 	return a
 }
@@ -369,7 +370,11 @@ func (a *App) AddSubtitles(video, subPath string) (PrepareResult, error) {
 	if sub == nil {
 		return PrepareResult{}, fmt.Errorf("that subtitle file is gone")
 	}
-	return a.prep.Prepare(video, *sub, m.Title, s.RecycleOriginal, !s.NoAutoSync, a.progressFor(video))
+	name := m.Title
+	if m.Kind == "episode" { // keep "Show - S01E03 - Title": the episode number lives in the file name
+		name = strings.TrimSuffix(filepath.Base(video), filepath.Ext(video))
+	}
+	return a.prep.Prepare(video, *sub, name, s.RecycleOriginal, !s.NoAutoSync, a.progressFor(video))
 }
 
 // progressFor sends "prepare:progress" events for one movie, only when the number or step changes.
@@ -395,6 +400,9 @@ func (a *App) CancelSubtitles() { a.prep.Cancel() }
 // GetPoster returns a poster image (a frame from the movie) as a data: URL,
 // or an error when no frame can be taken; the page then draws a title cover.
 func (a *App) GetPoster(video string) (string, error) {
+	if show := a.showOf(video); show != "" {
+		return a.GetShowPoster(show, video)
+	}
 	if a.tmdbOn() {
 		if m, ok, _ := a.tmdb.meta(a.titleOf(video)); ok && m.Poster != "" {
 			if img, err := a.tmdb.image(m.Poster, "w342"); err == nil {
@@ -472,8 +480,14 @@ func (a *App) FindSubtitlesOnline(video, lang string) ([]OSResult, error) {
 	if c.key == "" {
 		return nil, fmt.Errorf("Add an OpenSubtitles key in Settings to search for subtitles online")
 	}
+	m := Movie{Path: video}
+	classify(&m, a.Settings().Folder)
+	if m.Kind == "episode" {
+		name, year := splitTitleYear(m.Show)
+		return c.search(video, name, year, lang, m.Season, m.Episode)
+	}
 	name, year := splitTitleYear(a.titleOf(video))
-	return c.search(video, name, year, lang)
+	return c.search(video, name, year, lang, 0, 0)
 }
 
 // DownloadSubtitleOnline saves the chosen subtitles next to the movie; the page then adds them as usual.
@@ -544,6 +558,9 @@ func (a *App) GetMovieInfo(video string) (MovieInfo, error) { return movieInfo(v
 
 // GetBackdrop returns a wide frame of the movie for the details view.
 func (a *App) GetBackdrop(video string) (string, error) {
+	if show := a.showOf(video); show != "" {
+		return a.episodeBackdrop(show, video)
+	}
 	if a.tmdbOn() {
 		if m, ok, _ := a.tmdb.meta(a.titleOf(video)); ok && m.Backdrop != "" {
 			if img, err := a.tmdb.image(m.Backdrop, "w1280"); err == nil {

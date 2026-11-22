@@ -125,6 +125,8 @@
     <div id="shelfTools" class="shelf-tools hidden">
       <div role="group" aria-label="Show">
         <button class="chip" data-filter="all" aria-pressed="true">All <b id="countAll"></b></button>
+        <span id="kindChips" class="hidden"><button class="chip" data-filter="movies" aria-pressed="false">Movies <b id="countMovies"></b></button>
+        <button class="chip" data-filter="shows" aria-pressed="false">Shows <b id="countShows"></b></button></span>
         <button class="chip" data-filter="subs" aria-pressed="false">Can get subtitles <b id="countSubs"></b></button>
       </div>
       <label class="sort">Sort
@@ -176,6 +178,7 @@
     <div class="detail-body">
       <div id="detailPoster" class="poster detail-poster"></div>
       <div>
+        <p id="dEyebrow" class="eyebrow hidden"><span id="dEyeShow" data-no-tr></span><span id="dEyeEp"></span></p>
         <h2 id="detailTitle" class="display" data-no-tr></h2>
         <div class="facts-row"><span id="dYear"></span><span id="dRuntime"></span><span id="dRating"></span><span id="dGenres" data-no-tr></span><span id="dVideo"></span><span id="dSize"></span></div>
         <p id="dOverview" class="overview hidden" data-no-tr></p>
@@ -188,6 +191,10 @@
           <h3>Sound</h3>
           <p id="dAudio">Reading the file…</p>
         </section>
+        <section id="dExtrasSection" class="detail-section hidden">
+          <h3>Extras</h3>
+          <ul id="dExtras" class="extra-list"></ul>
+        </section>
         <section class="detail-section">
           <h3>On the TV</h3>
           <p id="dTv"></p>
@@ -196,6 +203,7 @@
           <button id="dPlay" class="btn btn-primary" title="Opens in this PC's video player. Tip: double-click a poster to play it."><svg aria-hidden="true"><use href="#i-play"/></svg>Play on this PC</button>
           <button id="dShow" class="btn btn-ghost"><svg aria-hidden="true"><use href="#i-folder"/></svg>Show in folder</button>
         </div>
+        <button id="dKind" type="button" class="link-btn kind-link"></button>
       </div>
     </div>
   </dialog>
@@ -214,10 +222,45 @@
   </dialog>
 
   <!-- "Not this movie?" -->
+  <!-- A TV show: its episodes by season, subtitles for all of them, extras -->
+  <dialog id="showPage" class="detail" aria-labelledby="showTitle">
+    <div id="showBg" class="detail-bg"></div>
+    <button id="showBack" class="icon-btn detail-back" aria-label="Back to your movies" title="Back (Esc)"><svg aria-hidden="true"><use href="#i-back"/></svg></button>
+    <div class="detail-body">
+      <div id="showPoster" class="poster detail-poster"></div>
+      <div>
+        <h2 id="showTitle" class="display" data-no-tr></h2>
+        <div class="facts-row"><span id="sYear"></span><span id="sSeasonCount"></span><span id="sEpCount"></span><span id="sRating"></span><span id="sGenres" data-no-tr></span><span id="sSize"></span></div>
+        <p id="sOverview" class="overview hidden" data-no-tr></p>
+        <p id="sSource" class="source hidden"></p>
+        <section class="detail-section">
+          <div class="ep-head"><h3>Episodes</h3><div id="sSeasons" class="season-chips" role="group" aria-label="Season"></div></div>
+          <ul id="sEpisodes" class="ep-list"></ul>
+        </section>
+        <section id="sSubsSection" class="detail-section hidden">
+          <h3>Subtitles for every episode</h3>
+          <div id="sSubs"></div>
+        </section>
+        <section id="sExtrasSection" class="detail-section hidden">
+          <h3>Extras</h3>
+          <ul id="sExtras" class="extra-list"></ul>
+        </section>
+        <section class="detail-section">
+          <h3>On the TV</h3>
+          <p id="sTv"></p>
+        </section>
+        <div class="detail-actions">
+          <button id="sShow" class="btn btn-ghost"><svg aria-hidden="true"><use href="#i-folder"/></svg>Show in folder</button>
+        </div>
+        <button id="sNotShow" type="button" class="link-btn kind-link">Not a show? Show these as movies</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="matchDlg" class="dialog">
     <form id="matchForm" method="dialog">
       <div class="dialog-head">
-        <h2 class="display">Which movie is it?</h2>
+        <h2 id="matchTitle" class="display">Which movie is it?</h2>
         <button class="icon-btn" value="cancel" formnovalidate aria-label="Close" title="Close (Esc)"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
       </div>
       <div class="match-search">
@@ -248,7 +291,7 @@
         <div><dt>Network</dt><dd id="netText">Checking…</dd></div>
       </dl>
       <h3 class="dialog-sub">Posters and movie info</h3>
-      <label class="row-toggle"><span><strong>Official posters from TMDB</strong><small id="tmdbNote">Posters, plot and rating from TMDB. Only movie titles and years are sent. Off: a frame from each movie, nothing online.</small></span><input type="checkbox" id="optTMDB" class="switch"></label>
+      <label class="row-toggle"><span><strong>Official posters from TMDB</strong><small id="tmdbNote">Posters, plot and rating from TMDB. Only titles and years of movies and shows are sent. Off: a frame from each movie, nothing online.</small></span><input type="checkbox" id="optTMDB" class="switch"></label>
       <div class="row-key">
         <span><strong>Your own TMDB key</strong><small id="keyNote">Optional. This app already has one; use yours if you prefer.</small></span>
         <span class="key-input"><input id="keyInput" class="input" type="password" autocomplete="off" spellcheck="false" placeholder="Paste a key" aria-label="Your own TMDB key"><button type="button" id="keySave" class="btn btn-ghost">Save</button></span>

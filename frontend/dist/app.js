@@ -337,7 +337,7 @@ $("drawerClose").addEventListener("click", closeDrawer);
 $("scrim").addEventListener("click", closeDrawer);
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && $("drawer").classList.contains("open")) closeDrawer();
-  if ($("detail").open) return;
+  if ($("detail").open || $("showPage").open) return;
   if ((e.ctrlKey && e.key.toLowerCase() === "f") || (e.key === "/" && document.activeElement.tagName !== "INPUT")) {
     e.preventDefault();
     $("search").focus();
@@ -398,15 +398,15 @@ $("keySave").addEventListener("click", async () => {
 
 // Posters, backdrops and info all change when TMDB is turned on or off: start over.
 function resetArt() {
-  posters.clear(); backdrops.clear(); metaCache.clear();
+  posters.clear(); backdrops.clear(); metaCache.clear(); showMetaCache.clear(); seasonCache.clear(); stills.clear();
   renderMovies();
 }
 // One movie's match changed: refresh just that one.
 function resetOne(path) {
   posters.delete(path); backdrops.delete(path); metaCache.delete(path);
-  api().GetPoster(path).then((url) => {
+  fetchPoster(path).then((url) => {
     posters.set(path, url);
-    document.querySelectorAll(`[data-path="${CSS.escape(path)}"] .poster img, #detailPoster[data-path="${CSS.escape(path)}"] img`)
+    document.querySelectorAll(`[data-path="${CSS.escape(path)}"] .poster img, .detail-poster[data-path="${CSS.escape(path)}"] img`)
       .forEach((img) => { img.classList.remove("loaded"); img.src = url; });
   }).catch(() => posters.set(path, ""));
   if (detailMovie && detailMovie.path === path) fillDetail(detailMovie, true);
@@ -418,6 +418,8 @@ async function openMatch(m) {
   matchFor = m;
   const { name, year } = splitTitle(m.title);
   $("matchQuery").value = year ? `${name} (${year})` : name;
+  $("matchTitle").textContent = m.kind === "show" ? "Which show is it?" : "Which movie is it?";
+  $("matchFrame").textContent = m.kind === "show" ? "Use a frame from an episode instead" : "Use a frame from the movie instead";
   $("matchDlg").showModal();
   await runMatchSearch();
 }
@@ -425,8 +427,10 @@ async function runMatchSearch() {
   const list = $("matchList");
   list.replaceChildren(el("li", { class: "muted small", text: "Searching TMDB…" }));
   try {
-    const found = await api().FindTMDBMatches(matchFor.path, $("matchQuery").value);
-    const cur = (metaCache.get(matchFor.path) || {}).id;
+    const found = matchFor.kind === "show"
+      ? await api().FindTMDBShowMatches(matchFor.title, $("matchQuery").value)
+      : await api().FindTMDBMatches(matchFor.path, $("matchQuery").value);
+    const cur = ((matchFor.kind === "show" ? showMetaCache.get(matchFor.key) : metaCache.get(matchFor.path)) || {}).id;
     list.replaceChildren();
     if (!found.length) list.append(el("li", { class: "muted small", text: "Nothing found. Try another spelling, or leave out the year." }));
     for (const c of found) {
@@ -444,8 +448,8 @@ async function chooseMatch(id) {
   const m = matchFor;
   $("matchDlg").close();
   try {
-    await api().SetTMDBMatch(m.path, id);
-    resetOne(m.path);
+    if (m.kind === "show") { await api().SetTMDBShowMatch(m.title, id); resetShow(m); }
+    else { await api().SetTMDBMatch(m.path, id); resetOne(m.path); }
   } catch (e) { toast(errText(e), true); }
 }
 $("matchGo").addEventListener("click", runMatchSearch);
@@ -479,6 +483,46 @@ async function loadMovies() {
 }
 
 const canGetSubs = (m) => !m.hasSubs && m.subs.length > 0;
+const entryCanSubs = (x) => (x.kind === "show" ? x.canSubs > 0 : canGetSubs(x));
+
+// Episodes become one entry per show; extras go to their show's or movie's page.
+let shows = new Map();     // show key -> { kind: "show", key, id, title, episodes, extras, seasons, ... }
+let extrasFor = new Map(); // movie path or "show:<key>" -> extras
+let homeItems = [];        // what the home screen shows: movies and shows
+function organizeItems() {
+  shows = new Map(); extrasFor = new Map();
+  const list = [];
+  for (const m of movies) {
+    if (m.kind === "episode") {
+      let sh = shows.get(m.showKey);
+      if (!sh) {
+        sh = { kind: "show", key: m.showKey, id: "show:" + m.showKey, title: m.show, episodes: [], extras: [], sizeMB: 0, added: 0 };
+        shows.set(m.showKey, sh);
+        list.push(sh);
+      }
+      sh.episodes.push(m);
+      sh.sizeMB += m.sizeMB;
+      sh.added = Math.max(sh.added, m.added);
+    } else if (m.kind === "extra" && m.extraFor) {
+      if (!extrasFor.has(m.extraFor)) extrasFor.set(m.extraFor, []);
+      extrasFor.get(m.extraFor).push(m);
+    } else list.push(m);
+  }
+  for (const sh of shows.values()) {
+    sh.episodes.sort((a, b) => a.season - b.season || a.episode - b.episode);
+    sh.extras = extrasFor.get(sh.id) || [];
+    // Season 0 is "Specials": listed after the real seasons.
+    sh.seasons = [...new Set(sh.episodes.map((e) => e.season))].sort((a, b) => (a || 1e9) - (b || 1e9));
+    sh.hasSubs = sh.episodes.every((e) => e.hasSubs);
+    sh.canSubs = sh.episodes.filter(canGetSubs).length;
+  }
+  homeItems = list;
+}
+// "WandaVision S01E03" in messages; movies keep their title.
+function itemName(m) {
+  if (m.kind !== "episode") return m.title;
+  return `${splitTitle(m.show).name} S${String(m.season).padStart(2, "0")}E${String(m.episode).padStart(2, "0")}`;
+}
 
 $("search").addEventListener("input", () => applyView());
 $("sortSel").addEventListener("change", (e) => { sortBy = e.target.value; localStorageSet("sort", sortBy); renderMovies(); });
@@ -493,44 +537,67 @@ function applyView() {
   const q = $("search").value.trim().toLowerCase();
   let shown = 0;
   document.querySelectorAll("#grid .card").forEach((c) => {
-    const hit = (!q || c.dataset.title.includes(q)) && (filter === "all" || c.dataset.subs === "1");
+    const f = filter;
+    const hit = (!q || c.dataset.title.includes(q)) && (f === "all" || (f === "subs" && c.dataset.subs === "1")
+      || (f === "movies" && c.dataset.kind === "movie") || (f === "shows" && c.dataset.kind === "show"));
     c.classList.toggle("hidden", !hit);
     if (hit) shown++;
   });
   $("noMatch").textContent = q ? "No movie matches your search." : "Every movie already has its subtitles.";
-  $("noMatch").classList.toggle("hidden", !(movies.length && shown === 0));
+  $("noMatch").classList.toggle("hidden", !(homeItems.length && shown === 0));
   fixRovingFocus();
 }
 
-function sortedMovies() {
-  const list = movies.slice();
+function sortedEntries() {
+  const list = homeItems.slice();
   if (sortBy === "added") list.sort((a, b) => b.added - a.added);
   else if (sortBy === "size") list.sort((a, b) => b.sizeMB - a.sizeMB);
-  return list; // "title": the app already sends them A to Z
+  else list.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base" }));
+  return list;
 }
 
 function renderMovies() {
+  organizeItems();
   const grid = $("grid");
   grid.replaceChildren();
-  $("emptyState").classList.toggle("hidden", movies.length > 0);
-  $("shelfTools").classList.toggle("hidden", movies.length === 0);
-  const canAdd = movies.filter(canGetSubs).length;
-  $("countAll").textContent = movies.length;
+  const n = homeItems.length;
+  $("emptyState").classList.toggle("hidden", n > 0);
+  $("shelfTools").classList.toggle("hidden", n === 0);
+  const nShows = shows.size, nMovies = n - nShows;
+  const canAdd = homeItems.filter(entryCanSubs).length;
+  $("countAll").textContent = n;
   $("countSubs").textContent = canAdd;
-  $("moviesSub").textContent = movies.length === 0
-    ? "Nothing found yet"
-    : `${movies.length} movie${movies.length > 1 ? "s" : ""}` + (canAdd ? `, ${canAdd} can get subtitles` : "");
-  if (!canAdd && filter === "subs") document.querySelector('.chip[data-filter="all"]').click();
+  $("countMovies").textContent = nMovies;
+  $("countShows").textContent = nShows;
+  const both = nShows > 0 && nMovies > 0;
+  $("kindChips").classList.toggle("hidden", !both);
+  const counts = [];
+  if (nMovies || !nShows) counts.push(`${nMovies} movie${nMovies === 1 ? "" : "s"}`);
+  if (nShows) counts.push(`${nShows} show${nShows === 1 ? "" : "s"}`);
+  $("moviesSub").textContent = n === 0 ? "Nothing found yet" : counts.join(", ") + (canAdd ? `, ${canAdd} can get subtitles` : "");
+  if ((!canAdd && filter === "subs") || (!both && (filter === "movies" || filter === "shows"))) document.querySelector('.chip[data-filter="all"]').click();
 
-  for (const m of sortedMovies()) grid.append(movieCard(m));
+  for (const x of sortedEntries()) grid.append(x.kind === "show" ? showCard(x) : movieCard(x));
   applyView();
   observePosters();
+  if ($("showPage").open && showOpen) {
+    const fresh = shows.get(showOpen.key);
+    if (fresh) fillShow(fresh); else closeShow();
+  }
   if (detailMovie) {
-    const fresh = movies.find((m) => m.path === detailMovie.path) || movies.find((m) => m.title === detailMovie.title);
+    const fresh = movies.find((m) => m.path === detailMovie.path) || movies.find((m) => m.title === detailMovie.title && m.kind === detailMovie.kind && m.episode === detailMovie.episode);
     if (fresh) fillDetail(fresh); else closeDetail();
   }
 }
 
+const posterKey = (x) => x.id || x.path;
+function fetchPoster(key) {
+  if (key.startsWith("show:")) {
+    const sh = shows.get(key.slice(5));
+    return sh ? api().GetShowPoster(sh.title, sh.episodes[0].path) : Promise.reject(new Error("gone"));
+  }
+  return api().GetPoster(key);
+}
 function posterEl(m) {
   const { name, year } = splitTitle(m.title);
   const poster = el("div", { class: "poster" });
@@ -540,10 +607,11 @@ function posterEl(m) {
   const img = el("img", { alt: "", decoding: "async" });
   img.addEventListener("load", () => img.classList.add("loaded"));
   poster.append(img);
-  const cached = posters.get(m.path);
+  const cached = posters.get(posterKey(m)) || (m.kind === "episode" && posters.get("show:" + m.showKey));
   if (cached) img.src = cached;
+  const canAdd = m.kind === "show" ? m.canSubs > 0 : m.subs.length > 0;
   if (m.hasSubs) poster.append(el("span", { class: "corner corner-ok", title: "Subtitles built in" }, icon("i-cc"), document.createTextNode("CC")));
-  else if (m.subs.length) poster.append(el("span", { class: "corner", title: "Subtitles can be added" }, document.createTextNode("SRT")));
+  else if (canAdd) poster.append(el("span", { class: "corner", title: "Subtitles can be added" }, document.createTextNode("SRT")));
   return poster;
 }
 
@@ -563,7 +631,7 @@ function movieCard(m) {
 
   const statusText = m.hasSubs ? "subtitles built in" : m.subs.length ? "subtitles can be added" : "no subtitles";
   const card = el("li", {
-    class: "card", tabindex: "-1", "data-path": m.path, "data-title": m.title.toLowerCase(), "data-subs": canGetSubs(m) ? "1" : "0",
+    class: "card", tabindex: "-1", "data-path": m.path, "data-kind": "movie", "data-title": m.title.toLowerCase(), "data-subs": canGetSubs(m) ? "1" : "0",
     "aria-label": `${m.title}, ${gb(m.sizeMB)}, ${statusText}. Press Enter for details.`,
   }, poster, el("div", { class: "card-title", text: name, title: m.path, "data-no-tr": true }), meta);
   card.addEventListener("click", () => { cardClickAt = Date.now(); openDetail(m, card); });
@@ -572,6 +640,27 @@ function movieCard(m) {
     if (e.target === card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openDetail(m, card); }
   });
   if (preparing === m.path) showBusy(poster);
+  return card;
+}
+
+function showCard(sh) {
+  const { name, year } = splitTitle(sh.title);
+  const poster = posterEl(sh);
+  const meta = el("div", { class: "card-meta" });
+  if (year) meta.append(el("span", { text: year }));
+  const nEp = sh.episodes.length;
+  const nSeasons = sh.seasons.filter((n) => n > 0).length;
+  meta.append(el("span", { text: nSeasons > 1 ? `${nSeasons} seasons` : `${nEp} episode${nEp === 1 ? "" : "s"}` }));
+  if (sh.hasSubs) meta.append(el("span", { class: "ok" }, icon("i-cc"), document.createTextNode("CC")));
+  const words = [sh.title, ...sh.episodes.map((e) => e.epTitle || "")].join(" ").toLowerCase();
+  const card = el("li", {
+    class: "card", tabindex: "-1", "data-path": sh.id, "data-kind": "show", "data-title": words, "data-subs": sh.canSubs ? "1" : "0",
+    "aria-label": `${sh.title}, ${nEp} episodes. Press Enter for details.`,
+  }, poster, el("div", { class: "card-title", text: name, title: sh.title, "data-no-tr": true }), meta);
+  card.addEventListener("click", () => openShow(sh, card));
+  card.addEventListener("keydown", (e) => {
+    if (e.target === card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openShow(sh, card); }
+  });
   return card;
 }
 
@@ -614,9 +703,9 @@ const posterObserver = new IntersectionObserver((entries) => {
     posterObserver.unobserve(en.target);
     const path = en.target.dataset.path;
     if (posters.has(path)) continue;
-    api().GetPoster(path).then((url) => {
+    fetchPoster(path).then((url) => {
       posters.set(path, url);
-      document.querySelectorAll(`[data-path="${CSS.escape(path)}"] .poster img, #detailPoster[data-path="${CSS.escape(path)}"] img`)
+      document.querySelectorAll(`[data-path="${CSS.escape(path)}"] .poster img, .detail-poster[data-path="${CSS.escape(path)}"] img`)
         .forEach((img) => (img.src = url));
     }).catch(() => posters.set(path, ""));
   }
@@ -646,6 +735,7 @@ function withTransition(fn, from, to) {
   });
   t.finished.finally(() => {
     $("detailPoster").style.viewTransitionName = "";
+    $("showPoster").style.viewTransitionName = "";
     document.querySelectorAll("#grid .poster").forEach((p) => (p.style.viewTransitionName = ""));
   });
 }
@@ -673,6 +763,293 @@ $("detailBack").addEventListener("click", closeDetail);
 $("detail").addEventListener("cancel", (e) => { e.preventDefault(); closeDetail(); });
 $("dShow").addEventListener("click", () => detailMovie && api().ShowInFolder(detailMovie.path));
 $("dPlay").addEventListener("click", () => detailMovie && playOnPC(detailMovie));
+$("dKind").addEventListener("click", async () => {
+  const m = detailMovie;
+  if (!m) return;
+  try {
+    await api().SetKind([m.path], m.kind === "episode" ? "movie" : "show");
+    closeDetail();
+    await loadMovies();
+    toast(m.kind === "episode" ? "Now shown as a movie." : "Now shown with your TV shows.");
+  } catch (e) { toast(errText(e), true); }
+});
+
+// ---------- TV shows ----------
+let showOpen = null;
+let showSeason = 1;
+const showMetaCache = new Map(); // show key -> TMDB info
+const seasonCache = new Map();   // "key:season" -> TMDB episodes
+const stills = new Map();        // TMDB picture path -> data: URL
+
+function openShow(sh, card) {
+  detailCard = card;
+  showSeason = sh.seasons[0];
+  withTransition(() => {
+    fillShow(sh);
+    $("showPage").showModal();
+    $("showBack").focus();
+  }, card && card.querySelector(".poster"), () => $("showPoster"));
+}
+function closeShow() {
+  if (!$("showPage").open) return;
+  const card = showOpen && cardFor(showOpen.id);
+  withTransition(() => { $("showPage").close(); showOpen = null; }, $("showPoster"), () => card && card.querySelector(".poster"));
+  if (card) { card.tabIndex = 0; card.focus({ preventScroll: true }); }
+}
+$("showBack").addEventListener("click", closeShow);
+$("showPage").addEventListener("cancel", (e) => { e.preventDefault(); closeShow(); });
+$("sShow").addEventListener("click", () => showOpen && api().ShowInFolder(showOpen.episodes[0].path));
+$("sNotShow").addEventListener("click", async () => {
+  const sh = showOpen;
+  if (!sh) return;
+  try {
+    await api().SetKind(sh.episodes.map((e) => e.path), "movie");
+    closeShow();
+    await loadMovies();
+    toast("Now shown as movies. To undo, open one and choose “This is a TV episode”.", false, 9000);
+  } catch (e) { toast(errText(e), true); }
+});
+
+function loadSeason(sh, n) {
+  const k = `${sh.key}:${n}`;
+  if (seasonCache.has(k)) return Promise.resolve(seasonCache.get(k));
+  if (!tmdbOn()) return Promise.resolve([]);
+  return api().GetSeason(sh.title, n).then((eps) => { seasonCache.set(k, eps || []); return eps || []; })
+    .catch(() => { seasonCache.set(k, []); return []; });
+}
+function tmdbEpisode(m) {
+  return (seasonCache.get(`${m.showKey}:${m.season}`) || []).find((x) => x.episode === m.episode);
+}
+// TMDB's name for the episode, else the one in the file name, else "Episode 3".
+function epName(m) {
+  const t = tmdbEpisode(m);
+  return (t && t.name) || m.epTitle || `Episode ${m.episode}`;
+}
+function loadStill(path, box) {
+  const put = (url) => {
+    if (!url) return;
+    const img = el("img", { alt: "", decoding: "async" });
+    img.addEventListener("load", () => img.classList.add("loaded"));
+    img.src = url;
+    box.replaceChildren(img);
+  };
+  if (stills.has(path)) { put(stills.get(path)); return; }
+  api().GetEpisodeStill(path).then((u) => { stills.set(path, u); put(u); }).catch(() => stills.set(path, ""));
+}
+
+function fillShow(sh) {
+  const same = $("showPage").open && showOpen && showOpen.key === sh.key;
+  showOpen = sh;
+  if (!sh.seasons.includes(showSeason)) showSeason = sh.seasons[0];
+  const { name, year } = splitTitle(sh.title);
+  $("showTitle").textContent = name;
+  $("sYear").textContent = year;
+  const nSeasons = sh.seasons.filter((n) => n > 0).length;
+  $("sSeasonCount").textContent = nSeasons > 1 ? `${nSeasons} seasons` : "";
+  const nEp = sh.episodes.length;
+  $("sEpCount").textContent = `${nEp} episode${nEp === 1 ? "" : "s"}`;
+  $("sSize").textContent = gb(sh.sizeMB);
+  const dp = $("showPoster");
+  dp.dataset.path = sh.id;
+  dp.replaceChildren(...posterEl(sh).childNodes);
+  if (!same) {
+    for (const id of ["sRating", "sGenres"]) $(id).textContent = "";
+    $("sOverview").classList.add("hidden");
+    $("sSource").classList.add("hidden");
+    $("showBg").classList.remove("loaded");
+    $("showBg").style.backgroundImage = "";
+  }
+  fillShowMeta(sh);
+  renderSeasonChips(sh);
+  renderEpisodes(sh);
+  renderShowSubs(sh);
+  renderExtras($("sExtras"), $("sExtrasSection"), sh.extras);
+  $("sTv").textContent = state.sharing
+    ? `In VLC, go to Browse, then Local network, then “${state.settings.name}”.`
+    : "Turn on Share with TV, then find it in VLC under Local network.";
+
+  const showBg = (url) => {
+    if (!url || !showOpen || showOpen.key !== sh.key) return;
+    $("showBg").style.backgroundImage = `url("${url}")`;
+    $("showBg").classList.add("loaded");
+  };
+  if (backdrops.has(sh.id)) showBg(backdrops.get(sh.id));
+  else api().GetShowBackdrop(sh.title, sh.episodes[0].path).then((u) => { backdrops.set(sh.id, u); showBg(u); }).catch(() => backdrops.set(sh.id, ""));
+}
+
+function fillShowMeta(sh) {
+  if (!tmdbOn()) return;
+  const show = (meta) => {
+    if (!showOpen || showOpen.key !== sh.key) return;
+    const src = $("sSource");
+    src.replaceChildren();
+    src.classList.remove("hidden");
+    const link = (text, fn) => el("button", { type: "button", class: "link-inline", text, onclick: fn });
+    if (meta.id) {
+      $("sRating").textContent = meta.votes >= 10 && meta.rating ? `Rated ${meta.rating.toFixed(1)}` : "";
+      $("sGenres").textContent = (meta.genres || []).slice(0, 3).join(", ");
+      $("sOverview").textContent = meta.overview || "";
+      $("sOverview").classList.toggle("hidden", !meta.overview);
+      src.append(document.createTextNode(meta.manual ? "Poster and info from TMDB (your pick). " : "Poster and info from TMDB. "),
+        link("Not this show?", () => openMatch(sh)));
+    } else if (meta.manual) {
+      src.append(document.createTextNode("Using a frame from an episode. "),
+        link("Look it up on TMDB again", async () => { await api().SetTMDBShowMatch(sh.title, 0); resetShow(sh); }));
+    } else {
+      src.append(document.createTextNode("Not found on TMDB. "), link("Find it", () => openMatch(sh)));
+    }
+  };
+  if (showMetaCache.has(sh.key)) { show(showMetaCache.get(sh.key)); return; }
+  api().GetShowMeta(sh.title).then((meta) => { showMetaCache.set(sh.key, meta); show(meta); }).catch(() => {});
+}
+
+// The show's TMDB match changed: start over for it.
+function resetShow(sh) {
+  posters.delete(sh.id); backdrops.delete(sh.id); showMetaCache.delete(sh.key);
+  for (const k of [...seasonCache.keys()]) if (k.startsWith(sh.key + ":")) seasonCache.delete(k);
+  for (const e of sh.episodes) { posters.delete(e.path); backdrops.delete(e.path); }
+  fetchPoster(sh.id).then((url) => {
+    posters.set(sh.id, url);
+    document.querySelectorAll(`[data-path="${CSS.escape(sh.id)}"] .poster img, .detail-poster[data-path="${CSS.escape(sh.id)}"] img`)
+      .forEach((img) => { img.classList.remove("loaded"); img.src = url; });
+  }).catch(() => posters.set(sh.id, ""));
+  if (showOpen && showOpen.key === sh.key) { $("showBg").classList.remove("loaded"); fillShow(sh); }
+}
+
+const seasonName = (n) => (n === 0 ? "Specials" : `Season ${n}`);
+
+function renderSeasonChips(sh) {
+  const box = $("sSeasons");
+  box.replaceChildren();
+  if (sh.seasons.length < 2) return;
+  for (const n of sh.seasons) {
+    box.append(el("button", {
+      type: "button", class: "chip", "aria-pressed": n === showSeason ? "true" : "false", text: seasonName(n),
+      onclick: () => { showSeason = n; renderSeasonChips(sh); renderEpisodes(sh); },
+    }));
+  }
+}
+
+function renderEpisodes(sh) {
+  const list = $("sEpisodes");
+  list.replaceChildren();
+  const n = showSeason;
+  for (const ep of sh.episodes.filter((e) => e.season === n)) {
+    const tm = tmdbEpisode(ep);
+    // A TMDB picture when there is one; no empty box otherwise.
+    const still = tm && tm.stillPath ? el("div", { class: "ep-still" }) : null;
+    if (still) loadStill(tm.stillPath, still);
+    const status = ep.hasSubs ? el("span", { class: "ok" }, icon("i-cc"), document.createTextNode("Subtitles built in"))
+      : canGetSubs(ep) ? el("span", { class: "srt", text: "Subtitles can be added" })
+        : el("span", { text: "No subtitles" });
+    const mins = tm && tm.minutes ? el("span", { text: fmtRuntime(tm.minutes) }) : null;
+    const open = el("button", { type: "button", class: "ep-open", "aria-label": `Episode ${ep.episode}: ${epName(ep)}` },
+      still,
+      el("span", { class: "ep-text" },
+        el("strong", {}, el("span", { class: "ep-num", text: String(ep.episode) }), el("span", { text: epName(ep), "data-no-tr": true })),
+        el("small", { class: "ep-sub" }, mins, status)));
+    open.addEventListener("click", () => { cardClickAt = Date.now(); openEpisode(ep); });
+    const row = el("li", { class: "ep", "data-path": ep.path }, open);
+    if (preparing === ep.path) {
+      row.append(el("div", { class: "ep-busy" }, el("div", { class: "ring" }, el("span", { text: "0%" })), el("span", { class: "stage", text: "Adding subtitles…" })));
+    } else {
+      row.append(el("button", { type: "button", class: "icon-btn ep-play", title: "Play on this PC", "aria-label": "Play on this PC", onclick: () => playOnPC(ep) }, icon("i-play")));
+    }
+    list.append(row);
+  }
+  if (tmdbOn() && !seasonCache.has(`${sh.key}:${n}`)) {
+    loadSeason(sh, n).then(() => { if (showOpen && showOpen.key === sh.key && showSeason === n) renderEpisodes(showOpen); });
+  }
+}
+
+function openEpisode(ep) {
+  detailCard = null;
+  fillDetail(ep);
+  $("detail").showModal();
+  $("detailBack").focus();
+}
+
+function fillEpisodeMeta(m) {
+  const sh = shows.get(m.showKey);
+  const show = () => {
+    if (!detailMovie || detailMovie.path !== m.path) return;
+    const t = tmdbEpisode(m);
+    $("detailTitle").textContent = epName(m);
+    if (t && t.minutes && !$("dRuntime").textContent) $("dRuntime").textContent = fmtRuntime(t.minutes);
+    $("dOverview").textContent = (t && t.overview) || "";
+    $("dOverview").classList.toggle("hidden", !(t && t.overview));
+    const src = $("dSource");
+    src.replaceChildren(document.createTextNode(t ? "Episode info from TMDB." : ""));
+    src.classList.toggle("hidden", !t);
+  };
+  if (sh) loadSeason(sh, m.season).then(show); else show();
+}
+
+function renderExtras(list, section, extras) {
+  list.replaceChildren();
+  section.classList.toggle("hidden", !extras.length);
+  for (const x of extras) {
+    list.append(el("li", {}, el("button", { type: "button", class: "extra", title: "Play on this PC", onclick: () => playOnPC(x) },
+      icon("i-play"), el("span", { text: x.title, "data-no-tr": true }), el("small", { class: "muted", text: gb(x.sizeMB) }))));
+  }
+}
+
+// ---------- subtitles for every episode ----------
+let batch = null; // { key, done, total, stop }
+function renderShowSubs(sh) {
+  const box = $("sSubs");
+  box.replaceChildren();
+  const todo = sh.episodes.filter(canGetSubs);
+  const running = batch && batch.key === sh.key;
+  $("sSubsSection").classList.toggle("hidden", !todo.length && !running);
+  if (running) {
+    const stop = el("button", { type: "button", class: "link-btn", text: batch.stop ? "Stopping after this episode…" : "Stop after this episode", disabled: batch.stop });
+    stop.addEventListener("click", () => { batch.stop = true; stop.disabled = true; stop.textContent = "Stopping after this episode…"; });
+    box.append(el("div", { class: "batch-line" }, el("span", { text: `Adding subtitles to episode ${Math.min(batch.done + 1, batch.total)} of ${batch.total}…` }), stop),
+      el("p", { class: "muted small", text: "You can keep using the app. Each episode takes a minute or two." }));
+    return;
+  }
+  if (!todo.length) return;
+  const langs = new Map();
+  for (const ep of todo) for (const s of ep.subs) { const k = s.lang || s.label; if (!langs.has(k)) langs.set(k, s.lang ? langName(s.lang, s.label) : s.label); }
+  const sel = el("select", { "aria-label": "Subtitle language for every episode" });
+  for (const [k, label] of langs) sel.append(el("option", { value: k, text: label, selected: k === state.settings.subLang }));
+  const n = todo.length;
+  box.append(
+    el("p", { text: n === 1 ? "1 episode has subtitle files next to it. TVs ignore separate files, so add them into the episode." : `${n} episodes have subtitle files next to them. TVs ignore separate files, so add them into the episodes, one after another.` }),
+    el("div", { class: "sub-row" }, sel, el("button", {
+      class: "btn btn-primary", disabled: preparing !== null, onclick: () => addAllEpisodes(sh, sel.value),
+    }, icon("i-plus"), document.createTextNode(n === 1 ? "Add to 1 episode" : `Add to all ${n} episodes`))));
+}
+function langName(code, fallback) {
+  const l = (window.__langs || []).find(([c]) => c === code);
+  return l ? l[1] : fallback.replace(/\s*\(.*\)$/, "");
+}
+
+async function addAllEpisodes(sh, lang) {
+  if (preparing || batch) return;
+  batch = { key: sh.key, done: 0, total: sh.episodes.filter(canGetSubs).length, stop: false };
+  const tried = new Set();
+  let added = 0;
+  try {
+    while (!batch.stop) {
+      const cur = shows.get(sh.key);
+      const ep = cur && cur.episodes.find((e) => canGetSubs(e) && !tried.has(e.path));
+      if (!ep) break;
+      tried.add(ep.path);
+      const sub = ep.subs.find((s) => (s.lang || s.label) === lang) || ep.subs[ep.defaultSub];
+      if (showOpen && showOpen.key === sh.key) renderShowSubs(cur);
+      const r = await addSubtitles(ep, sub.path, true);
+      if (r === "cancelled") break;
+      if (r === "ok") added++;
+      batch.done++;
+    }
+  } finally {
+    batch = null;
+    await loadMovies();
+    if (added) toast(added === 1 ? "Subtitles added to 1 episode." : `Subtitles added to ${added} episodes.`, false, 7000);
+  }
+}
 
 // ---------- play on this PC ----------
 // Opens the movie in the PC's own video player. TV Share can't see inside that player, so unless it
@@ -711,6 +1088,7 @@ async function playOnPC(m) {
 
 function fillMeta(m) {
   if (!tmdbOn()) return;
+  if (m.kind === "episode") { fillEpisodeMeta(m); return; }
   const show = (meta) => {
     if (!detailMovie || detailMovie.path !== m.path) return;
     const src = $("dSource");
@@ -743,9 +1121,18 @@ function fillDetail(m, force = false) {
   const same = !force && detailMovie && detailMovie.path === m.path;
   detailMovie = m;
   const { name, year } = splitTitle(m.title);
-  $("detailTitle").textContent = name;
+  const isEp = m.kind === "episode";
+  $("detailTitle").textContent = isEp ? epName(m) : name;
+  $("dEyebrow").classList.toggle("hidden", !isEp);
+  if (isEp) {
+    $("dEyeShow").textContent = splitTitle(m.show).name;
+    $("dEyeEp").textContent = m.season === 0 ? `Specials, Episode ${m.episode}` : `Season ${m.season}, Episode ${m.episode}`;
+  }
+  $("detailBack").setAttribute("aria-label", isEp ? "Back to the show" : "Back to your movies");
   $("dYear").textContent = year;
   $("dSize").textContent = gb(m.sizeMB);
+  renderExtras($("dExtras"), $("dExtrasSection"), isEp ? [] : (extrasFor.get(m.path) || []));
+  $("dKind").textContent = isEp ? "Not part of a show? Show it as a movie" : "This is a TV episode";
 
   const dp = $("detailPoster");
   dp.dataset.path = m.path;
@@ -978,27 +1365,34 @@ function showBusy(poster) {
     el("button", { class: "link-btn", text: "Cancel", onclick: (e) => { e.stopPropagation(); api().CancelSubtitles(); } })));
 }
 
-async function addSubtitles(m, subPath) {
+// quiet: part of "Add to all episodes", which says once at the end what it did.
+async function addSubtitles(m, subPath, quiet = false) {
   preparing = m.path;
-  document.querySelectorAll(".card-meta .add, #dSubs .btn-primary").forEach((b) => (b.disabled = true));
+  document.querySelectorAll(".card-meta .add, #dSubs .btn-primary, #sSubs .btn-primary").forEach((b) => (b.disabled = true));
   const card = cardFor(m.path);
   if (card) showBusy(card.querySelector(".poster"));
   if (detailMovie && detailMovie.path === m.path) renderDetailSubs(m);
+  if (showOpen && m.kind === "episode" && showOpen.key === m.showKey) renderEpisodes(showOpen);
 
+  let result = "ok";
   try {
     const res = await api().AddSubtitles(m.path, subPath);
-    toast(res.recycled
-      ? `Subtitles added to “${m.title}”. The original is in the Recycle Bin.`
-      : `Subtitles added to “${m.title}”.`);
-    if (res.syncNote) toast(res.syncNote, false, 7000);
+    if (!quiet) {
+      toast(res.recycled
+        ? `Subtitles added to “${itemName(m)}”. The original is in the Recycle Bin.`
+        : `Subtitles added to “${itemName(m)}”.`);
+      if (res.syncNote) toast(res.syncNote, false, 7000);
+    }
     if (detailMovie && detailMovie.path === m.path && res.output) detailMovie = { ...detailMovie, path: res.output };
   } catch (e) {
     const msg = errText(e);
-    if (msg !== "cancelled") toast(msg, true, 7000);
+    result = msg === "cancelled" ? "cancelled" : "error";
+    if (msg !== "cancelled") toast(quiet ? `${itemName(m)}: ${msg}` : msg, true, 7000);
   } finally {
     preparing = null;
-    loadMovies();
+    await loadMovies();
   }
+  return result;
 }
 
 // Re-time the subtitles inside a movie: shiftMs 0 = match to the sound, otherwise move by that much.

@@ -53,7 +53,44 @@ type MovieMeta struct {
 	Poster   string   `json:"posterPath"`
 	Backdrop string   `json:"backdropPath"`
 	Fetched  int64    `json:"fetched"`
-	Manual   bool     `json:"manual"` // the user picked this match
+	Manual   bool     `json:"manual"`            // the user picked this match
+	Seasons  int      `json:"seasons,omitempty"` // TV shows
+}
+
+// EpisodeMeta is one episode's name, plot and picture from TMDB.
+type EpisodeMeta struct {
+	Episode  int     `json:"episode"`
+	Name     string  `json:"name"`
+	Overview string  `json:"overview"`
+	Still    string  `json:"stillPath"`
+	Minutes  int     `json:"minutes"`
+	Rating   float64 `json:"rating"`
+}
+
+type seasonCache struct {
+	Fetched  int64         `json:"fetched"`
+	Episodes []EpisodeMeta `json:"episodes"`
+}
+
+func (c *tmdbClient) season(id, n int) ([]EpisodeMeta, error) {
+	var d struct {
+		Episodes []struct {
+			Episode  int     `json:"episode_number"`
+			Name     string  `json:"name"`
+			Overview string  `json:"overview"`
+			Still    string  `json:"still_path"`
+			Runtime  int     `json:"runtime"`
+			Vote     float64 `json:"vote_average"`
+		} `json:"episodes"`
+	}
+	if err := c.get("/tv/"+strconv.Itoa(id)+"/season/"+strconv.Itoa(n), url.Values{"language": {c.language()}}, &d); err != nil {
+		return nil, err
+	}
+	out := []EpisodeMeta{}
+	for _, e := range d.Episodes {
+		out = append(out, EpisodeMeta{Episode: e.Episode, Name: e.Name, Overview: e.Overview, Still: e.Still, Minutes: e.Runtime, Rating: e.Vote})
+	}
+	return out, nil
 }
 
 // TMDBCandidate is one choice in the "Not this movie?" list.
@@ -111,35 +148,60 @@ func (c *tmdbClient) get(path string, q url.Values, out any) error {
 
 type tmdbSearchResult struct {
 	Results []struct {
-		ID          int     `json:"id"`
-		Title       string  `json:"title"`
-		Original    string  `json:"original_title"`
-		ReleaseDate string  `json:"release_date"`
-		PosterPath  string  `json:"poster_path"`
-		Popularity  float64 `json:"popularity"`
+		ID           int     `json:"id"`
+		Title        string  `json:"title"`
+		Original     string  `json:"original_title"`
+		ReleaseDate  string  `json:"release_date"`
+		Name         string  `json:"name"`           // TV shows
+		OriginalName string  `json:"original_name"`  // TV shows
+		FirstAir     string  `json:"first_air_date"` // TV shows
+		PosterPath   string  `json:"poster_path"`
+		Popularity   float64 `json:"popularity"`
 	} `json:"results"`
 }
 
+// A kind of TMDB lookup: movies (""), or TV shows.
+const tvKind = "tv"
+
 func (c *tmdbClient) search(name, year string) (tmdbSearchResult, error) {
+	return c.searchKind("", name, year)
+}
+
+func (c *tmdbClient) searchKind(kind, name, year string) (tmdbSearchResult, error) {
 	var r tmdbSearchResult
 	q := url.Values{"query": {name}, "include_adult": {"false"}, "language": {c.language()}}
-	if year != "" {
-		q.Set("year", year)
+	path, yearParam := "/search/movie", "year"
+	if kind == tvKind {
+		path, yearParam = "/search/tv", "first_air_date_year"
 	}
-	err := c.get("/search/movie", q, &r)
+	if year != "" {
+		q.Set(yearParam, year)
+	}
+	err := c.get(path, q, &r)
 	if err == nil && len(r.Results) == 0 && year != "" {
 		// Release years differ between countries; try once without the year.
-		q.Del("year")
-		err = c.get("/search/movie", q, &r)
+		q.Del(yearParam)
+		err = c.get(path, q, &r)
+	}
+	if kind == tvKind { // the same fields as movies from here on
+		for i := range r.Results {
+			x := &r.Results[i]
+			x.Title, x.Original, x.ReleaseDate = x.Name, x.OriginalName, x.FirstAir
+		}
 	}
 	return r, err
 }
 
-func (c *tmdbClient) details(id int) (MovieMeta, error) {
+func (c *tmdbClient) details(id int) (MovieMeta, error) { return c.detailsKind("", id) }
+
+func (c *tmdbClient) detailsKind(kind string, id int) (MovieMeta, error) {
 	var d struct {
 		ID          int     `json:"id"`
 		Title       string  `json:"title"`
+		Name        string  `json:"name"`
 		ReleaseDate string  `json:"release_date"`
+		FirstAir    string  `json:"first_air_date"`
+		Seasons     int     `json:"number_of_seasons"`
 		Overview    string  `json:"overview"`
 		VoteAverage float64 `json:"vote_average"`
 		VoteCount   int     `json:"vote_count"`
@@ -149,13 +211,21 @@ func (c *tmdbClient) details(id int) (MovieMeta, error) {
 			Name string `json:"name"`
 		} `json:"genres"`
 	}
-	if err := c.get("/movie/"+strconv.Itoa(id), url.Values{"language": {c.language()}}, &d); err != nil {
+	kindPath := "movie"
+	if kind == tvKind {
+		kindPath = "tv"
+	}
+	if err := c.get("/"+kindPath+"/"+strconv.Itoa(id), url.Values{"language": {c.language()}}, &d); err != nil {
 		return MovieMeta{}, err
+	}
+	if kind == tvKind {
+		d.Title, d.ReleaseDate = d.Name, d.FirstAir
 	}
 	m := MovieMeta{
 		ID: d.ID, Title: d.Title, Year: yearOf(d.ReleaseDate), Overview: d.Overview,
 		Rating: d.VoteAverage, Votes: d.VoteCount, Poster: d.PosterPath, Backdrop: d.Backdrop,
-		URL: "https://www.themoviedb.org/movie/" + strconv.Itoa(d.ID), Fetched: time.Now().Unix(),
+		URL: "https://www.themoviedb.org/" + kindPath + "/" + strconv.Itoa(d.ID), Fetched: time.Now().Unix(),
+		Seasons: d.Seasons,
 	}
 	for _, g := range d.Genres {
 		m.Genres = append(m.Genres, g.Name)
@@ -312,7 +382,21 @@ func (t *TMDB) hasKey() bool {
 
 // meta returns the TMDB info for a movie title like "Coyote Vs. Acme (2026)", or ok=false
 // when the user chose a frame for it, or nothing was found.
-func (t *TMDB) meta(title string) (MovieMeta, bool, error) {
+func (t *TMDB) meta(title string) (MovieMeta, bool, error) { return t.metaKind("", title) }
+
+// showMeta is meta for a TV show title like "WandaVision (2021)".
+func (t *TMDB) showMeta(show string) (MovieMeta, bool, error) { return t.metaKind(tvKind, show) }
+
+// kindTitle keeps TV shows apart from movies of the same name in the cache and the user's matches.
+func kindTitle(kind, title string) string {
+	if kind == tvKind {
+		return "tv: " + title
+	}
+	return title
+}
+
+func (t *TMDB) metaKind(kind, plainTitle string) (MovieMeta, bool, error) {
+	title := kindTitle(kind, plainTitle)
 	id, chosen := t.matches.get(title)
 	if chosen && id < 0 {
 		return MovieMeta{}, false, nil
@@ -328,8 +412,8 @@ func (t *TMDB) meta(title string) (MovieMeta, bool, error) {
 		return MovieMeta{}, false, fmt.Errorf("no TMDB key")
 	}
 	if !chosen {
-		name, year := splitTitleYear(title)
-		r, err := t.client.search(name, year)
+		name, year := splitTitleYear(plainTitle)
+		r, err := t.client.searchKind(kind, name, year)
 		if err != nil {
 			return MovieMeta{}, false, err
 		}
@@ -339,13 +423,35 @@ func (t *TMDB) meta(title string) (MovieMeta, bool, error) {
 			return MovieMeta{}, false, nil
 		}
 	}
-	m, err := t.client.details(id)
+	m, err := t.client.detailsKind(kind, id)
 	if err != nil {
 		return MovieMeta{}, false, err
 	}
 	m.Manual = chosen
 	writeMeta(title, t.client.language(), m)
 	return m, true, nil
+}
+
+// season returns a show's episode names, plots and pictures for one season (cached like the rest).
+func (t *TMDB) season(show string, n int) ([]EpisodeMeta, error) {
+	m, ok, err := t.showMeta(show)
+	if !ok {
+		return []EpisodeMeta{}, err
+	}
+	file := metaFile(kindTitle(tvKind, show)+" #"+strconv.Itoa(m.ID)+" s"+strconv.Itoa(n), t.client.language())
+	var c seasonCache
+	if b, err := os.ReadFile(file); err == nil && json.Unmarshal(b, &c) == nil && time.Since(time.Unix(c.Fetched, 0)) < tmdbMaxAge {
+		return c.Episodes, nil
+	}
+	eps, err := t.client.season(m.ID, n)
+	if err != nil {
+		return []EpisodeMeta{}, err
+	}
+	c = seasonCache{Fetched: time.Now().Unix(), Episodes: eps}
+	_ = os.MkdirAll(tmdbCacheDir(), 0o755)
+	b, _ := json.Marshal(c)
+	_ = os.WriteFile(file, b, 0o644)
+	return eps, nil
 }
 
 var reTitleYear = regexp.MustCompile(`^(.*?)\s*\((\d{4})\)$`)
@@ -390,6 +496,10 @@ func (t *TMDB) image(path, size string) (string, error) {
 
 // candidates is the "Not this movie?" list: TMDB's top 5 for the title, with small posters.
 func (t *TMDB) candidates(title, query string) ([]TMDBCandidate, error) {
+	return t.candidatesKind("", title, query)
+}
+
+func (t *TMDB) candidatesKind(kind, title, query string) ([]TMDBCandidate, error) {
 	if !t.hasKey() {
 		return nil, fmt.Errorf("no TMDB key")
 	}
@@ -397,7 +507,7 @@ func (t *TMDB) candidates(title, query string) ([]TMDBCandidate, error) {
 	if strings.TrimSpace(query) != "" {
 		name, year = splitTitleYear(strings.TrimSpace(query))
 	}
-	r, err := t.client.search(name, year)
+	r, err := t.client.searchKind(kind, name, year)
 	if err != nil {
 		return nil, err
 	}

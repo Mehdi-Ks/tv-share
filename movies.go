@@ -36,6 +36,15 @@ type Movie struct {
 	DefaultSub int         `json:"defaultSub"`
 	Outside    bool        `json:"outside"` // not in the shared folder (dropped in from elsewhere)
 	Added      int64       `json:"added"`   // when the file arrived on this PC (Unix ms), for "Recently added"
+
+	// What the file is (see shows.go): "movie", "episode" or "extra".
+	Kind     string `json:"kind"`
+	Show     string `json:"show,omitempty"`     // episodes: "WandaVision (2021)"
+	ShowKey  string `json:"showKey,omitempty"`  // episodes: groups one show's files
+	Season   int    `json:"season"`             // episodes (0 = specials)
+	Episode  int    `json:"episode,omitempty"`  // episodes
+	EpTitle  string `json:"epTitle,omitempty"`  // episodes: "Now in Color"
+	ExtraFor string `json:"extraFor,omitempty"` // extras: "show:<key>" or the movie's path
 }
 
 // scanMovies lists the videos in root (and its sub-folders, up to 3 levels).
@@ -64,7 +73,11 @@ func findVideos(root string) []string {
 			return nil
 		}
 		if isVideo(p) {
-			if info, err := d.Info(); err == nil && info.Size() >= minVideoBytes && !strings.HasSuffix(strings.ToLower(p), ".partial.mkv") {
+			min := int64(minVideoBytes)
+			if extrasFolder(p, root) != "" {
+				min = minExtraBytes
+			}
+			if info, err := d.Info(); err == nil && info.Size() >= min && !isSample(p) && !strings.HasSuffix(strings.ToLower(p), ".partial.mkv") {
 				paths = append(paths, p)
 			}
 		}
@@ -89,6 +102,7 @@ func describeMovies(paths []string, root, prefLang string) []Movie {
 		}(i, p)
 	}
 	wg.Wait()
+	organize(movies)
 	sort.Slice(movies, func(a, b int) bool {
 		return strings.ToLower(movies[a].Title) < strings.ToLower(movies[b].Title)
 	})
@@ -97,6 +111,7 @@ func describeMovies(paths []string, root, prefLang string) []Movie {
 
 func describeMovie(p, root, prefLang string) Movie {
 	m := Movie{Path: p, Title: movieTitle(p, root)}
+	classify(&m, root)
 	if st, err := os.Stat(p); err == nil {
 		m.SizeMB = st.Size() >> 20
 		m.Added = fileAdded(st)
@@ -135,12 +150,18 @@ func movieTitle(p, root string) string {
 	fromFile := cleanTitle(strings.TrimSuffix(filepath.Base(p), filepath.Ext(p)))
 	// A movie alone in its own folder: the folder name is usually the cleaner title,
 	// but only if it looks like one ("Movie (2026)"), not "New folder" or "Downloads".
-	if filepath.Clean(dir) != filepath.Clean(root) && countVideos(dir) == 1 {
+	if filepath.Clean(dir) != filepath.Clean(root) && !genericFolder(filepath.Base(dir)) && countVideos(dir) == 1 {
 		if fromDir := cleanTitle(filepath.Base(dir)); hasYear(fromDir) || !hasYear(fromFile) && looksLikeTitle(fromDir) {
 			return fromDir
 		}
 	}
 	return fromFile
+}
+
+// genericFolder: "Season 2", "Specials" or "Extras" never name a movie.
+func genericFolder(name string) bool {
+	n := strings.ToLower(strings.TrimSpace(name))
+	return reSeasonDir.MatchString(n) || n == "specials" || n == "special" || extrasDirs[n]
 }
 
 var reYearSuffix = regexp.MustCompile(`\((?:19|20)\d{2}\)$`)
@@ -410,9 +431,15 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle, 
 	if name == "" {
 		name = strings.TrimSuffix(filepath.Base(video), filepath.Ext(video))
 	}
-	out := filepath.Join(dir, name+".mkv")
-	if strings.EqualFold(out, video) || fileExists(out) {
-		out = filepath.Join(dir, name+" (with subtitles).mkv")
+	clean := filepath.Join(dir, name+".mkv")
+	out := clean
+	// Never write over another file: "(with subtitles)", then "(with subtitles 2)"...
+	for i := 1; strings.EqualFold(out, video) || fileExists(out); i++ {
+		if i == 1 {
+			out = filepath.Join(dir, name+" (with subtitles).mkv")
+		} else {
+			out = filepath.Join(dir, fmt.Sprintf("%s (with subtitles %d).mkv", name, i))
+		}
 	}
 	tmp := strings.TrimSuffix(out, ".mkv") + ".partial.mkv"
 	defer os.Remove(tmp)
@@ -519,6 +546,10 @@ func (pr *Preparer) Prepare(video string, sub SubOption, title string, recycle, 
 		progress(99, "Moving the original to the Recycle Bin…")
 		if err := moveToRecycleBin(video); err == nil {
 			res.Recycled = true
+			// The original made way: take the clean name back ("Movie (with subtitles).mkv" -> "Movie.mkv").
+			if !strings.EqualFold(out, clean) && !fileExists(clean) && os.Rename(out, clean) == nil {
+				res.Output = clean
+			}
 		}
 	}
 	progress(100, "Done")

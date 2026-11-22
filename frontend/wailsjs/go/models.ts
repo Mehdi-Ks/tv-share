@@ -20,6 +20,28 @@ export namespace main {
 	        this.message = source["message"];
 	    }
 	}
+	export class EpisodeMeta {
+	    episode: number;
+	    name: string;
+	    overview: string;
+	    stillPath: string;
+	    minutes: number;
+	    rating: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new EpisodeMeta(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.episode = source["episode"];
+	        this.name = source["name"];
+	        this.overview = source["overview"];
+	        this.stillPath = source["stillPath"];
+	        this.minutes = source["minutes"];
+	        this.rating = source["rating"];
+	    }
+	}
 	export class SubOption {
 	    path: string;
 	    label: string;
@@ -47,6 +69,13 @@ export namespace main {
 	    defaultSub: number;
 	    outside: boolean;
 	    added: number;
+	    kind: string;
+	    show?: string;
+	    showKey?: string;
+	    season: number;
+	    episode?: number;
+	    epTitle?: string;
+	    extraFor?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Movie(source);
@@ -62,6 +91,13 @@ export namespace main {
 	        this.defaultSub = source["defaultSub"];
 	        this.outside = source["outside"];
 	        this.added = source["added"];
+	        this.kind = source["kind"];
+	        this.show = source["show"];
+	        this.showKey = source["showKey"];
+	        this.season = source["season"];
+	        this.episode = source["episode"];
+	        this.epTitle = source["epTitle"];
+	        this.extraFor = source["extraFor"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -115,6 +151,7 @@ export namespace main {
 	    backdropPath: string;
 	    fetched: number;
 	    manual: boolean;
+	    seasons?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new MovieMeta(source);
@@ -134,6 +171,7 @@ export namespace main {
 	        this.backdropPath = source["backdropPath"];
 	        this.fetched = source["fetched"];
 	        this.manual = source["manual"];
+	        this.seasons = source["seasons"];
 	    }
 	}
 	export class NetworkInfo {
@@ -245,6 +283,7 @@ export namespace main {
 	    osUser: string;
 	    osToken: string;
 	    osBase: string;
+	    kinds?: Record<string, string>;
 	    noAutoSync: boolean;
 	
 	    static createFrom(source: any = {}) {
@@ -267,6 +306,7 @@ export namespace main {
 	        this.osUser = source["osUser"];
 	        this.osToken = source["osToken"];
 	        this.osBase = source["osBase"];
+	        this.kinds = source["kinds"];
 	        this.noAutoSync = source["noAutoSync"];
 	    }
 	}

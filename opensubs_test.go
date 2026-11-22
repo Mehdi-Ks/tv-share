@@ -97,7 +97,7 @@ func TestOpenSubtitlesSearchDownloadLogin(t *testing.T) {
 	os.WriteFile(video, make([]byte, 200000), 0o644)
 	c := &osClient{key: "oskey"}
 
-	res, err := c.search(video, "Test Movie", "2024", "eng")
+	res, err := c.search(video, "Test Movie", "2024", "eng", 0, 0)
 	if err != nil || len(res) != 2 {
 		t.Fatalf("search: %v %+v", err, res)
 	}

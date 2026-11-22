@@ -30,6 +30,10 @@ export function FindTMDBMatches(arg1, arg2) {
   return window['go']['main']['App']['FindTMDBMatches'](arg1, arg2);
 }
 
+export function FindTMDBShowMatches(arg1, arg2) {
+  return window['go']['main']['App']['FindTMDBShowMatches'](arg1, arg2);
+}
+
 export function FinishSetup(arg1, arg2) {
   return window['go']['main']['App']['FinishSetup'](arg1, arg2);
 }
@@ -40,6 +44,10 @@ export function FixSubtitleSync(arg1, arg2) {
 
 export function GetBackdrop(arg1) {
   return window['go']['main']['App']['GetBackdrop'](arg1);
+}
+
+export function GetEpisodeStill(arg1) {
+  return window['go']['main']['App']['GetEpisodeStill'](arg1);
 }
 
 export function GetMovieInfo(arg1) {
@@ -56,6 +64,22 @@ export function GetOpenSubtitlesStatus() {
 
 export function GetPoster(arg1) {
   return window['go']['main']['App']['GetPoster'](arg1);
+}
+
+export function GetSeason(arg1, arg2) {
+  return window['go']['main']['App']['GetSeason'](arg1, arg2);
+}
+
+export function GetShowBackdrop(arg1, arg2) {
+  return window['go']['main']['App']['GetShowBackdrop'](arg1, arg2);
+}
+
+export function GetShowMeta(arg1) {
+  return window['go']['main']['App']['GetShowMeta'](arg1);
+}
+
+export function GetShowPoster(arg1, arg2) {
+  return window['go']['main']['App']['GetShowPoster'](arg1, arg2);
 }
 
 export function GetState() {
@@ -118,6 +142,10 @@ export function RefreshNetwork() {
   return window['go']['main']['App']['RefreshNetwork']();
 }
 
+export function SetKind(arg1, arg2) {
+  return window['go']['main']['App']['SetKind'](arg1, arg2);
+}
+
 export function SetLanguage(arg1) {
   return window['go']['main']['App']['SetLanguage'](arg1);
 }
@@ -148,6 +176,10 @@ export function SetTMDBKey(arg1) {
 
 export function SetTMDBMatch(arg1, arg2) {
   return window['go']['main']['App']['SetTMDBMatch'](arg1, arg2);
+}
+
+export function SetTMDBShowMatch(arg1, arg2) {
+  return window['go']['main']['App']['SetTMDBShowMatch'](arg1, arg2);
 }
 
 export function Settings() {

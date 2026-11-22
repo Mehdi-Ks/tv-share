@@ -16,11 +16,15 @@ export function FindSubtitlesOnline(arg1:string,arg2:string):Promise<Array<main.
 
 export function FindTMDBMatches(arg1:string,arg2:string):Promise<Array<main.TMDBCandidate>>;
 
+export function FindTMDBShowMatches(arg1:string,arg2:string):Promise<Array<main.TMDBCandidate>>;
+
 export function FinishSetup(arg1:string,arg2:string):Promise<void>;
 
 export function FixSubtitleSync(arg1:string,arg2:number):Promise<main.PrepareResult>;
 
 export function GetBackdrop(arg1:string):Promise<string>;
+
+export function GetEpisodeStill(arg1:string):Promise<string>;
 
 export function GetMovieInfo(arg1:string):Promise<main.MovieInfo>;
 
@@ -29,6 +33,14 @@ export function GetMovieMeta(arg1:string):Promise<main.MovieMeta>;
 export function GetOpenSubtitlesStatus():Promise<main.OSStatus>;
 
 export function GetPoster(arg1:string):Promise<string>;
+
+export function GetSeason(arg1:string,arg2:number):Promise<Array<main.EpisodeMeta>>;
+
+export function GetShowBackdrop(arg1:string,arg2:string):Promise<string>;
+
+export function GetShowMeta(arg1:string):Promise<main.MovieMeta>;
+
+export function GetShowPoster(arg1:string,arg2:string):Promise<string>;
 
 export function GetState():Promise<main.State>;
 
@@ -60,6 +72,8 @@ export function PlayOnPC(arg1:string):Promise<main.PlayResult>;
 
 export function RefreshNetwork():Promise<main.NetworkInfo>;
 
+export function SetKind(arg1:Array<string>,arg2:string):Promise<void>;
+
 export function SetLanguage(arg1:string):Promise<void>;
 
 export function SetName(arg1:string):Promise<void>;
@@ -75,6 +89,8 @@ export function SetTMDBChoice(arg1:boolean):Promise<void>;
 export function SetTMDBKey(arg1:string):Promise<void>;
 
 export function SetTMDBMatch(arg1:string,arg2:number):Promise<void>;
+
+export function SetTMDBShowMatch(arg1:string,arg2:number):Promise<void>;
 
 export function Settings():Promise<main.Settings>;
 

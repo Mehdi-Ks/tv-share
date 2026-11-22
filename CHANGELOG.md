@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.9.0 (2026-11-22)
+
+- **TV shows.** Episodes are recognised from their names (`S01E03`, `1x03`, or a "Season 1" folder) and grouped
+  into one card per show instead of one card per episode. The show's page lists the episodes by season with their
+  names, length and subtitle status; click one for its own page (subtitles, sync, sound), or play it right away.
+  Shows with several seasons get one card and Season 1 / Season 2 buttons; season 0 episodes are listed as
+  **Specials**.
+- **Show info from TMDB** (with official posters on): the show's poster, summary and rating, and each episode's name,
+  plot and picture. **Not this show?** works like *Not this movie?*.
+- **Add subtitles to every episode at once.** When episodes have subtitle files next to them, pick a language and
+  click **Add to all episodes**: they're done one after another, with a progress line and a *Stop after this
+  episode* option.
+- **Extras** (Featurettes, Extras, Deleted Scenes, Trailers... folders) no longer show up as movies. They're listed
+  at the bottom of their show's or movie's page, ready to play. Sample files are skipped. Your own folders with
+  names like "Other" or "Shorts" right in the movie folder stay as movies.
+- **Movies / Shows** filters on the home screen.
+- Wrong guess? **Not a show? Show these as movies** on a show's page, or **This is a TV episode** on a movie's page.
+  Undoing it from one episode brings back the whole show, every season.
+- Finding subtitles online for an episode searches by show, season and episode.
+- Fixed: adding subtitles again to a movie whose "(with subtitles)" copy already existed could write over that copy.
+  The new file now always gets a free name, and takes back the clean name once the original is in the Recycle Bin.
+
 ## 1.8.2 (2026-11-22)
 
 - Fixed: **Open folder** on the home screen did nothing (the folder opened in a hidden window).
