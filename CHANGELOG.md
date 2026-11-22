@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.2 (2026-11-22)
+
+- Fixed: **Open folder** on the home screen did nothing (the folder opened in a hidden window).
+
 ## 1.8.1 (2026-11-22)
 
 - **Play on this PC.** Double-click a poster, or click **Play on this PC** on a movie's page, to watch it on the

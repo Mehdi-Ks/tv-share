@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.8.1"
+const appVersion = "1.8.2"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().
@@ -561,7 +561,7 @@ func (a *App) OpenFolder(p string) {
 		p = a.Settings().Folder
 	}
 	allowSetForeground.Call(uintptr(asfwAny)) // so the folder opens in front of the app
-	_ = hiddenCmd("explorer.exe", p).Start()
+	openShell(p)                              // not hiddenCmd: its "hide the window" flag made Explorer open the folder invisibly
 }
 
 // ShowInFolder opens Explorer with the file selected (or its folder, if the file is gone).

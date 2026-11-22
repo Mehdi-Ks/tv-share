@@ -84,10 +84,7 @@ func (a *App) PlayOnPC(p string) (PlayResult, error) {
 	res.Player = defaultPlayer(filepath.Ext(p))
 	res.IsVLC = strings.Contains(strings.ToLower(res.Player), "vlc")
 	allowSetForeground.Call(uintptr(asfwAny)) // so the player opens in front of TV Share
-	verb, _ := windows.UTF16PtrFromString("open")
-	file, _ := windows.UTF16PtrFromString(p)
-	dir, _ := windows.UTF16PtrFromString(filepath.Dir(p))
-	if err := windows.ShellExecute(0, verb, file, nil, dir, windows.SW_SHOWNORMAL); err != nil {
+	if err := openShell(p); err != nil {
 		return res, fmt.Errorf("Windows has no video player for this kind of file")
 	}
 	return res, nil

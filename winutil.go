@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -44,6 +45,14 @@ func windowsDisplayName() string {
 // lowPriority runs a long job (copying a movie, taking frames) below normal priority.
 func lowPriority(cmd *exec.Cmd) {
 	cmd.SysProcAttr.CreationFlags |= 0x00004000 // BELOW_NORMAL_PRIORITY_CLASS
+}
+
+// openShell opens a file or folder the way a double-click in Explorer does, in a visible window.
+func openShell(p string) error {
+	verb, _ := windows.UTF16PtrFromString("open")
+	file, _ := windows.UTF16PtrFromString(p)
+	dir, _ := windows.UTF16PtrFromString(filepath.Dir(p))
+	return windows.ShellExecute(0, verb, file, nil, dir, windows.SW_SHOWNORMAL)
 }
 
 // showInExplorer opens a folder with the file selected. Explorer needs the exact form
