@@ -18,6 +18,14 @@ export function CountMovies(arg1) {
   return window['go']['main']['App']['CountMovies'](arg1);
 }
 
+export function DownloadSubtitleOnline(arg1, arg2, arg3) {
+  return window['go']['main']['App']['DownloadSubtitleOnline'](arg1, arg2, arg3);
+}
+
+export function FindSubtitlesOnline(arg1, arg2) {
+  return window['go']['main']['App']['FindSubtitlesOnline'](arg1, arg2);
+}
+
 export function FindTMDBMatches(arg1, arg2) {
   return window['go']['main']['App']['FindTMDBMatches'](arg1, arg2);
 }
@@ -40,6 +48,10 @@ export function GetMovieInfo(arg1) {
 
 export function GetMovieMeta(arg1) {
   return window['go']['main']['App']['GetMovieMeta'](arg1);
+}
+
+export function GetOpenSubtitlesStatus() {
+  return window['go']['main']['App']['GetOpenSubtitlesStatus']();
 }
 
 export function GetPoster(arg1) {
@@ -74,6 +86,14 @@ export function OpenNetworkSettings() {
   return window['go']['main']['App']['OpenNetworkSettings']();
 }
 
+export function OpenSubtitlesKeyPage() {
+  return window['go']['main']['App']['OpenSubtitlesKeyPage']();
+}
+
+export function OpenSubtitlesSignupPage() {
+  return window['go']['main']['App']['OpenSubtitlesSignupPage']();
+}
+
 export function OpenURL(arg1) {
   return window['go']['main']['App']['OpenURL'](arg1);
 }
@@ -92,6 +112,10 @@ export function SetLanguage(arg1) {
 
 export function SetName(arg1) {
   return window['go']['main']['App']['SetName'](arg1);
+}
+
+export function SetOpenSubtitlesKey(arg1) {
+  return window['go']['main']['App']['SetOpenSubtitlesKey'](arg1);
 }
 
 export function SetOption(arg1, arg2) {
@@ -120,6 +144,14 @@ export function Settings() {
 
 export function ShowInFolder(arg1) {
   return window['go']['main']['App']['ShowInFolder'](arg1);
+}
+
+export function SignInOpenSubtitles(arg1, arg2) {
+  return window['go']['main']['App']['SignInOpenSubtitles'](arg1, arg2);
+}
+
+export function SignOutOpenSubtitles() {
+  return window['go']['main']['App']['SignOutOpenSubtitles']();
 }
 
 export function StartShare() {

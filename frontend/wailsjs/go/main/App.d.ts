@@ -10,6 +10,10 @@ export function ChooseFolder():Promise<string>;
 
 export function CountMovies(arg1:string):Promise<number>;
 
+export function DownloadSubtitleOnline(arg1:string,arg2:number,arg3:string):Promise<string>;
+
+export function FindSubtitlesOnline(arg1:string,arg2:string):Promise<Array<main.OSResult>>;
+
 export function FindTMDBMatches(arg1:string,arg2:string):Promise<Array<main.TMDBCandidate>>;
 
 export function FinishSetup(arg1:string,arg2:string):Promise<void>;
@@ -21,6 +25,8 @@ export function GetBackdrop(arg1:string):Promise<string>;
 export function GetMovieInfo(arg1:string):Promise<main.MovieInfo>;
 
 export function GetMovieMeta(arg1:string):Promise<main.MovieMeta>;
+
+export function GetOpenSubtitlesStatus():Promise<main.OSStatus>;
 
 export function GetPoster(arg1:string):Promise<string>;
 
@@ -38,6 +44,10 @@ export function OpenFolder(arg1:string):Promise<void>;
 
 export function OpenNetworkSettings():Promise<void>;
 
+export function OpenSubtitlesKeyPage():Promise<void>;
+
+export function OpenSubtitlesSignupPage():Promise<void>;
+
 export function OpenURL(arg1:string):Promise<void>;
 
 export function PickFolder(arg1:string):Promise<string>;
@@ -47,6 +57,8 @@ export function RefreshNetwork():Promise<main.NetworkInfo>;
 export function SetLanguage(arg1:string):Promise<void>;
 
 export function SetName(arg1:string):Promise<void>;
+
+export function SetOpenSubtitlesKey(arg1:string):Promise<void>;
 
 export function SetOption(arg1:string,arg2:boolean):Promise<void>;
 
@@ -61,6 +73,10 @@ export function SetTMDBMatch(arg1:string,arg2:number):Promise<void>;
 export function Settings():Promise<main.Settings>;
 
 export function ShowInFolder(arg1:string):Promise<void>;
+
+export function SignInOpenSubtitles(arg1:string,arg2:string):Promise<void>;
+
+export function SignOutOpenSubtitles():Promise<void>;
 
 export function StartShare():Promise<void>;
 

@@ -21,6 +21,10 @@ type Settings struct {
 	SetupDone       bool   `json:"setupDone"` // the first-run "Where are your movies?" screen was completed
 	TMDB            string `json:"tmdb"`      // official posters: "" = not asked yet, "on", "off"
 	TMDBKey         string `json:"tmdbKey"`
+	OSKey           string `json:"osKey"`      // the user's own OpenSubtitles key (optional; release builds have one)
+	OSUser          string `json:"osUser"`     // signed-in OpenSubtitles username
+	OSToken         string `json:"osToken"`    // OpenSubtitles login token (the password is never stored)
+	OSBase          string `json:"osBase"`     // OpenSubtitles API address for this account
 	NoAutoSync      bool   `json:"noAutoSync"` // true = don't match added subtitles to the sound   // the user's own TMDB key (optional; release builds have one)
 }
 

@@ -60,6 +60,9 @@ PlayStation media players, and many TVs' built-in media apps.
 - Movies that came with `.srt` files (next to the movie or in a `Subs` folder) show **SRT** and **+ Subtitles**.
   Click it, or open the movie (click its poster) to pick another language first. The **Can get subtitles** filter lists them all. The new file is checked (same length, subtitle track present) before anything
   else happens. Then the original goes to the **Recycle Bin**, never deleted outright. You can turn that off in Settings.
+- **No subtitles at all?** Open the movie and click **Find subtitles online** (OpenSubtitles.com). Ones marked
+  **Made for this file** are timed for your exact copy. 5 downloads a day without an account; sign in with a free
+  OpenSubtitles account in Settings for more.
 - **Out of sync with the voices?** Adding subtitles lines them up with the movie's sound automatically (it fixes
   delays, subtitles made for a different frame rate, and different cuts). For subtitles already inside a movie,
   open it and click **Fix sync**, or move them **Earlier** / **Later** yourself.
@@ -90,6 +93,9 @@ PlayStation media players, and many TVs' built-in media apps.
   *Official posters*: each movie's title and year are sent to TMDB to fetch its poster, plot and rating; nothing
   else is sent. You choose on first run and can change it in Settings. Both are cached in
   `%LOCALAPPDATA%\TV Share` (TMDB data is refreshed every 3 months).
+- **Subtitles online are only searched when you click.** A search sends the movie file's fingerprint (computed from
+  its size and first and last 64 KB) and the movie's title and year to OpenSubtitles.com. If you sign in, your
+  password goes to OpenSubtitles only; TV Share keeps just the sign-in token they return.
 - Settings are stored in `%APPDATA%\TV Share\settings.json`. To remove the app, uninstall it from *Installed apps*
   (or delete `TVShare.exe` if you used the portable version), then delete that folder if you want your settings gone too.
 
@@ -112,7 +118,8 @@ checksums and keeps them in `%LOCALAPPDATA%\TV Share\tools`. If you'd rather not
 
 ## Credits
 
-Movie posters and information come from [TMDB](https://www.themoviedb.org).
+Movie posters and information come from [TMDB](https://www.themoviedb.org). Subtitles found online come from
+[OpenSubtitles.com](https://www.opensubtitles.com).
 This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 <img src="frontend/dist/img/tmdb.svg" alt="TMDB logo" height="14">
@@ -133,7 +140,7 @@ The app ends up in `build/bin/TVShare.exe`. Official posters need a TMDB key: ge
 [themoviedb.org](https://www.themoviedb.org/settings/api) and paste it in the app's Settings, or put it in
 `build/tmdb.key` (one line, never committed) and build with `build.ps1`, which builds it into the app and also
 makes the installer. To build the installer too, install [NSIS](https://nsis.sourceforge.io)
-(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.7.0 build/installer/tvshare.nsi`, which writes
+(`winget install NSIS.NSIS`) and run `makensis /DVERSION=1.8.0 build/installer/tvshare.nsi`, which writes
 `build/bin/TVShare-Setup.exe`. The window is plain HTML, CSS and JavaScript in `frontend/dist`
 (no Node.js or bundler needed). `wails dev` runs it with live reload.
 

@@ -24,6 +24,9 @@ wails dev
 uses rclone and FFmpeg from winget, from `%LOCALAPPDATA%\TV Share\tools`, or next to `TVShare.exe`. On first run
 it offers to install them.
 
+**Finding subtitles online** needs an OpenSubtitles key (free, from opensubtitles.com/en/consumers; keep
+*dev_mode* on while testing). Paste it in Settings, or put it in `build/opensubtitles.key` for `build.ps1`.
+
 **Official posters** need a TMDB key, which release builds include but the source code doesn't. Without one the
 app shows frames from the movies instead, which is fine for most work. To test posters, get a free key at
 [themoviedb.org](https://www.themoviedb.org/settings/api) and paste it in the app's Settings. Never commit a key.
@@ -39,6 +42,7 @@ app shows frames from the movies instead, which is fine for most work. To test p
 | `movies.go` | Finds movies and subtitle files, builds subtitles into movies |
 | `poster.go`, `info.go`, `tmdb.go` | Posters (movie frames or TMDB), file details, TMDB lookups |
 | `deps.go`, `download.go` | Installing the helpers (winget, or a checked direct download) |
+| `opensubs.go` | Finding and downloading subtitles on OpenSubtitles.com, sign-in |
 | `subsync.go` | Subtitle sync: alass against the sound, manual shifts, re-timing subtitles inside a movie |
 | `settings.go`, `winutil.go` | Settings file, Windows-specific bits |
 | `build/installer/tvshare.nsi` | The installer (NSIS) |

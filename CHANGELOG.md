@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.8.0 (2026-11-22)
+
+- **Find subtitles online.** On a movie's page, pick a language and search OpenSubtitles.com. Subtitles made for
+  your exact file are marked **Made for this file** and listed first: they're in sync from the start. Pick one and
+  TV Share downloads it and builds it into the movie as usual (with the sync check).
+- **Easy account sign-in.** Without an account, OpenSubtitles allows 5 downloads a day. Settings → *Subtitles from
+  OpenSubtitles* has a one-click link to create a free account and a sign-in box for more downloads. Your password
+  is sent to OpenSubtitles only and never saved; only their sign-in token is kept. When the daily limit is reached,
+  the app says so and points to sign-in.
+- **Your own key, if you want:** paste it in Settings, with a link to the page where you get one for free.
+- Searching sends the file's fingerprint and the movie's title and year to OpenSubtitles, only when you click.
+- Fixed: a long movie page (for example after adding subtitles) had its top cut off and couldn't be scrolled back up.
+- Fixed: a wrong OpenSubtitles key pasted in Settings could be accepted.
+
 ## 1.7.0 (2026-11-21)
 
 - **Subtitles in sync with the voices.** When you add subtitles, TV Share now listens to the movie's sound and

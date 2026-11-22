@@ -22,12 +22,23 @@ if (Test-Path $keyFile) {
   Write-Host "TMDB key: none (build\tmdb.key missing). Official posters need a key pasted in Settings."
 }
 
+$osFile = Join-Path $PSScriptRoot "build\opensubtitles.key"
+$osKey = ""
+if (Test-Path $osFile) {
+  $osKey = (Get-Content $osFile -Raw).Trim()
+  if ($osKey -notmatch '^[A-Za-z0-9._-]+$') { throw "build\opensubtitles.key doesn't look like an OpenSubtitles key." }
+  $ldflags = ("$ldflags -X main.osBuiltInKey=$osKey").Trim()
+  Write-Host "OpenSubtitles key: found (built in)."
+} else {
+  Write-Host "OpenSubtitles key: none (build\opensubtitles.key missing). Finding subtitles online needs a key pasted in Settings."
+}
+
 go test ./...
 if ($LASTEXITCODE) { throw "tests failed" }
 
 $wails = Join-Path (go env GOPATH) "bin\wails.exe"
 # Wails prints its build settings, key included: hide it so it never lands in a log.
-if ($ldflags) { & $wails build -clean -trimpath -ldflags $ldflags 2>&1 | ForEach-Object { "$_".Replace($key, "********") } }
+if ($ldflags) { & $wails build -clean -trimpath -ldflags $ldflags 2>&1 | ForEach-Object { $l = "$_"; foreach ($k in @($key, $osKey)) { if ($k) { $l = $l.Replace($k, "********") } }; $l } }
 else { & $wails build -clean -trimpath }
 if ($LASTEXITCODE) { throw "wails build failed" }
 

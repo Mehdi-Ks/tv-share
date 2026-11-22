@@ -59,6 +59,7 @@ function coverColors(t) {
 // ---------- state ----------
 async function load() {
   if (window.i18n) { try { await api().SetLanguage(window.i18n.lang); } catch {} }
+  try { window.__langs = await api().Languages(); } catch {}
   state = await api().GetState();
   render();
   if (state.deps.ready && state.settings.setupDone) loadMovies();
@@ -329,6 +330,7 @@ $("settingsBtn").addEventListener("click", async () => {
     for (const [code, name] of langs) sel.append(el("option", { value: code, text: name }));
   }
   sel.value = state.settings.subLang;
+  refreshOSStatus();
   $("settingsDlg").showModal();
 });
 for (const [id, key] of [["optAutoStart", "autoStartShare"], ["optLogin", "launchAtLogin"], ["optRecycle", "recycleOriginal"], ["optSync", "autoSync"]]) {
@@ -761,7 +763,8 @@ function renderDetailSubs(m) {
     return;
   }
   if (!m.subs.length) {
-    box.append(el("p", { text: "None found. Put a .srt file next to the movie (same name, or in a Subs folder), then press Refresh." }));
+    box.append(el("p", { text: "None found on your PC yet." }));
+    box.append(onlineBox(m));
     return;
   }
   box.append(el("p", { text: "Subtitle files were found next to the movie. TVs ignore separate files, so add them into the movie. It takes about a minute, with no quality loss." }));
@@ -771,7 +774,142 @@ function renderDetailSubs(m) {
     class: "btn btn-primary btn-lg", disabled: preparing !== null,
     onclick: () => addSubtitles(m, sel.value),
   }, icon("i-plus"), document.createTextNode("Add subtitles"))));
+  box.append(onlineBox(m, true));
 }
+
+// ---------- subtitles from OpenSubtitles ----------
+let osStatus = null;
+async function refreshOSStatus() {
+  try { osStatus = await api().GetOpenSubtitlesStatus(); } catch { osStatus = null; }
+  renderOSSettings();
+  return osStatus;
+}
+
+// "Find subtitles online": a language, a search, then a short list. Exact matches first.
+function onlineBox(m, secondary = false) {
+  const wrap = el("div", { class: "online-box" + (secondary ? " secondary" : "") });
+  const lang = el("select", { "aria-label": "Subtitle language" });
+  const langs = (window.__langs || [["eng", "English"]]);
+  for (const [code, name] of langs) lang.append(el("option", { value: code, text: name, selected: code === state.settings.subLang }));
+  const list = el("ul", { class: "os-list", "aria-live": "polite" });
+  const go = el("button", { class: "btn btn-ghost", disabled: preparing !== null }, icon("i-search"), document.createTextNode("Find subtitles online"));
+  go.addEventListener("click", () => searchOnline(m, lang.value, list, go));
+  wrap.append(
+    el("p", { class: "muted small", text: secondary ? "Or find other subtitles online:" : "Find subtitles on OpenSubtitles.com. Ones made for this exact file are in sync from the start." }),
+    el("div", { class: "sub-row" }, lang, go),
+    list,
+    el("p", { class: "muted small os-privacy", text: "Searching sends this file's fingerprint and the movie's title and year to OpenSubtitles. Nothing else." }));
+  return wrap;
+}
+
+async function searchOnline(m, lang, list, btn) {
+  btn.disabled = true;
+  list.replaceChildren(el("li", { class: "muted small", text: "Searching OpenSubtitles…" }));
+  try {
+    const found = await api().FindSubtitlesOnline(m.path, lang);
+    list.replaceChildren();
+    if (!found.length) {
+      list.append(el("li", { class: "muted small", text: "Nothing found in this language. Try another one." }));
+      return;
+    }
+    for (const r of found.slice(0, 8)) {
+      const tags = [];
+      if (r.exact) tags.push(el("span", { class: "os-exact" }, icon("i-check"), document.createTextNode("Made for this file")));
+      if (r.hi) tags.push(el("span", { class: "os-tag", text: "For the hard of hearing" }));
+      list.append(el("li", {}, el("button", {
+        type: "button", class: "os-item", disabled: preparing !== null,
+        onclick: () => getOnline(m, r),
+      },
+        el("span", { class: "os-main" },
+          el("strong", { text: r.langLabel }),
+          el("small", { class: "os-release", text: r.release || "Unknown release", "data-no-tr": true })),
+        el("span", { class: "os-side" }, ...tags, el("small", { class: "muted", text: `${r.downloads.toLocaleString(window.i18n && window.i18n.lang === "fr" ? "fr-FR" : "en-US")} downloads` })))));
+    }
+  } catch (e) {
+    list.replaceChildren(el("li", { class: "error small", text: errText(e) }));
+    if (/sign in|downloads/i.test(errText(e))) list.append(el("li", {}, el("button", { type: "button", class: "link-btn", style: "margin-left:0", text: "Sign in or create a free account", onclick: openOSSettings })));
+  } finally {
+    btn.disabled = preparing !== null;
+  }
+}
+
+async function getOnline(m, r) {
+  try {
+    toast("Downloading the subtitles…");
+    const path = await api().DownloadSubtitleOnline(m.path, r.fileId, r.language);
+    refreshOSStatus();
+    await addSubtitles(m, path);
+  } catch (e) {
+    const msg = errText(e);
+    toast(msg, true, 9000);
+    if (/sign in/i.test(msg)) openOSSettings();
+  }
+}
+
+function openOSSettings() {
+  if ($("detail").open) closeDetail();
+  $("settingsBtn").click();
+  setTimeout(() => { const s = $("osSection"); if (s) s.scrollIntoView({ block: "start" }); }, 150);
+}
+
+// Settings: sign in, sign up, own key. Built so a non-technical person can do it in a minute.
+function renderOSSettings() {
+  const st = osStatus;
+  const box = $("osAccount");
+  if (!box) return;
+  box.replaceChildren();
+  if (!st || !st.available) {
+    box.append(el("p", { class: "muted small", text: "To search for subtitles online, add a free OpenSubtitles API key below." }));
+  } else if (st.user) {
+    const left = st.remaining >= 0 ? `${st.remaining} downloads left today` : "Signed in";
+    box.append(el("div", { class: "os-signed" },
+      el("span", {}, el("strong", { text: st.user, "data-no-tr": true }), el("small", { class: "muted", text: left })),
+      el("button", { type: "button", class: "btn btn-ghost", text: "Sign out", onclick: async () => { await api().SignOutOpenSubtitles(); refreshOSStatus(); } })));
+  } else {
+    const user = el("input", { class: "input", placeholder: "Username", autocomplete: "username", spellcheck: "false", "aria-label": "OpenSubtitles username" });
+    const pass = el("input", { class: "input", type: "password", placeholder: "Password", autocomplete: "current-password", "aria-label": "OpenSubtitles password" });
+    const err = el("p", { class: "error small hidden" });
+    const signIn = el("button", { type: "button", class: "btn btn-primary", text: "Sign in" });
+    signIn.addEventListener("click", async () => {
+      signIn.disabled = true; err.classList.add("hidden");
+      try {
+        await api().SignInOpenSubtitles(user.value, pass.value);
+        pass.value = "";
+        toast("Signed in to OpenSubtitles.");
+        refreshOSStatus();
+      } catch (e) { err.textContent = errText(e); err.classList.remove("hidden"); }
+      finally { signIn.disabled = false; }
+    });
+    pass.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); signIn.click(); } });
+    box.append(
+      el("p", { class: "muted small", text: "Without an account: 5 subtitle downloads a day. With a free account: more, on your own allowance." }),
+      el("ol", { class: "os-steps" },
+        el("li", {}, document.createTextNode("No account yet? "),
+          el("button", { type: "button", class: "link-inline", text: "Create one for free", onclick: () => api().OpenSubtitlesSignupPage() }),
+          document.createTextNode(" (about a minute, just an email and a password).")),
+        el("li", { text: "Then sign in here. Your password is only sent to OpenSubtitles, never saved." })),
+      el("div", { class: "os-login" }, user, pass, signIn), err);
+  }
+  $("osKeyNote").textContent = st && st.ownKey
+    ? "Using your own key. Empty the box and press Save to go back to the app's key."
+    : st && st.builtIn ? "Optional. This app already has one; use yours if you prefer."
+      : "Needed to search for subtitles. Getting one is free.";
+  $("osKeyInput").placeholder = st && st.ownKey ? "Your key is saved" : "Paste a key";
+}
+
+$("osKeySave").addEventListener("click", async () => {
+  const btn = $("osKeySave");
+  btn.disabled = true;
+  try {
+    const key = $("osKeyInput").value.trim();
+    await api().SetOpenSubtitlesKey(key);
+    $("osKeyInput").value = "";
+    toast(key ? "Key saved. OpenSubtitles accepted it." : "Back to the app's own key.");
+    refreshOSStatus();
+  } catch (e) { toast(errText(e), true); }
+  finally { btn.disabled = false; }
+});
+$("osKeyHelp").addEventListener("click", () => api().OpenSubtitlesKeyPage());
 
 // ---------- adding subtitles ----------
 function showBusy(poster) {

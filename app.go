@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const appVersion = "1.7.0"
+const appVersion = "1.8.0"
 
 // App holds everything the window can call. Each exported method is available
 // in the page as window.go.main.App.<Method>().
@@ -443,6 +443,86 @@ func (a *App) SetTMDBChoice(on bool) error {
 	}
 	return a.updateSettings(func(s *Settings) { s.TMDB = v })
 }
+
+// ---- OpenSubtitles ---------------------------------------------------------------
+
+func (a *App) osClient() *osClient {
+	s := a.Settings()
+	key := strings.TrimSpace(s.OSKey)
+	if key == "" {
+		key = osBuiltInKey
+	}
+	return &osClient{key: key, token: s.OSToken, user: s.OSUser, base: s.OSBase}
+}
+
+// GetOpenSubtitlesStatus is what Settings shows: key, sign-in and downloads left today.
+func (a *App) GetOpenSubtitlesStatus() OSStatus {
+	c := a.osClient()
+	st := OSStatus{Available: c.key != "", BuiltIn: osBuiltInKey != "", OwnKey: strings.TrimSpace(a.Settings().OSKey) != "",
+		User: c.user, Remaining: -1}
+	if c.key != "" && c.token != "" {
+		st.Remaining, st.ResetIn = c.remaining()
+	}
+	return st
+}
+
+// FindSubtitlesOnline searches OpenSubtitles for a movie in one language (our 3-letter code).
+func (a *App) FindSubtitlesOnline(video, lang string) ([]OSResult, error) {
+	c := a.osClient()
+	if c.key == "" {
+		return nil, fmt.Errorf("Add an OpenSubtitles key in Settings to search for subtitles online")
+	}
+	name, year := splitTitleYear(a.titleOf(video))
+	return c.search(video, name, year, lang)
+}
+
+// DownloadSubtitleOnline saves the chosen subtitles next to the movie; the page then adds them as usual.
+func (a *App) DownloadSubtitleOnline(video string, fileID int, lang string) (string, error) {
+	c := a.osClient()
+	if c.key == "" {
+		return "", fmt.Errorf("Add an OpenSubtitles key in Settings to search for subtitles online")
+	}
+	p, _, err := c.download(fileID, video, lang)
+	return p, err
+}
+
+// SignInOpenSubtitles signs in with the user's own free account. The password is sent to
+// OpenSubtitles once and never stored; only the token they give back is kept.
+func (a *App) SignInOpenSubtitles(user, pass string) error {
+	user = strings.TrimSpace(user)
+	if user == "" || pass == "" {
+		return fmt.Errorf("Enter your OpenSubtitles username and password")
+	}
+	c := a.osClient()
+	if c.key == "" {
+		return fmt.Errorf("Add an OpenSubtitles key first")
+	}
+	c.token, c.base = "", ""
+	if err := c.login(user, pass); err != nil {
+		return err
+	}
+	return a.updateSettings(func(s *Settings) { s.OSUser, s.OSToken, s.OSBase = c.user, c.token, c.base })
+}
+
+func (a *App) SignOutOpenSubtitles() error {
+	a.osClient().logout()
+	return a.updateSettings(func(s *Settings) { s.OSUser, s.OSToken, s.OSBase = "", "", "" })
+}
+
+// SetOpenSubtitlesKey saves the user's own key after checking it ("" goes back to the built-in one).
+func (a *App) SetOpenSubtitlesKey(key string) error {
+	key = strings.TrimSpace(key)
+	if key != "" {
+		if err := checkOSKey(key); err != nil {
+			return err
+		}
+	}
+	return a.updateSettings(func(s *Settings) { s.OSKey = key })
+}
+
+// OpenSubtitlesSignupPage and OpenSubtitlesKeyPage open the right OpenSubtitles pages in the browser.
+func (a *App) OpenSubtitlesSignupPage() { runtime.BrowserOpenURL(a.ctx, osSignup) }
+func (a *App) OpenSubtitlesKeyPage()    { runtime.BrowserOpenURL(a.ctx, osKeyPage) }
 
 // SetTMDBKey saves the user's own key after checking it with TMDB ("" goes back to the built-in one).
 func (a *App) SetTMDBKey(key string) error {

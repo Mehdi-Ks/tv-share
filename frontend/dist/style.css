@@ -229,7 +229,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .detail-body {
   position: relative; height: 100%; overflow: auto; display: grid; grid-template-columns: minmax(170px, 250px) minmax(0, 560px);
-  gap: 38px; align-content: center; padding: 72px 48px 48px; scrollbar-color: #3a3a3a transparent;
+  gap: 38px; align-content: safe center; padding: 72px 48px 48px; scrollbar-color: #3a3a3a transparent;
 }
 .detail-back { position: absolute; top: 16px; left: 16px; z-index: 2; background: rgba(17,17,17,.6); }
 .detail-poster { width: 100%; align-self: start; view-transition-name: none; }
@@ -243,6 +243,31 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .detail-section p { color: var(--muted); font-size: 14px; }
 .sub-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .sub-row select { height: 40px; min-width: 180px; }
+.online-box { margin-top: 12px; display: grid; gap: 8px; }
+.online-box.secondary { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.online-box .sub-row { margin-top: 0; }
+.os-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.os-item {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left;
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
+  transition: border-color 150ms ease, transform 140ms var(--ease-out);
+}
+.os-item:active:not(:disabled) { transform: scale(.99); }
+@media (hover: hover) and (pointer: fine) { .os-item:hover:not(:disabled) { border-color: var(--accent); } }
+.os-main { display: grid; gap: 2px; min-width: 0; }
+.os-release { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.os-side { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: none; font-size: 12px; }
+.os-exact { display: inline-flex; align-items: center; gap: 4px; color: var(--ok); font-weight: 600; }
+.os-exact svg { width: 12px; height: 12px; }
+.os-tag { color: var(--muted); }
+.os-privacy { font-size: 11.5px; }
+.os-account { display: grid; gap: 10px; padding-bottom: 6px; }
+.os-steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 13.5px; }
+.os-login { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+.os-login .input { margin: 0; height: 36px; }
+.os-signed { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.os-signed span { display: grid; }
+.link-inline.small { font-size: 12.5px; padding: 0; margin-top: 2px; }
 .sync-box { margin-top: 14px; display: grid; gap: 8px; }
 .sync-box .sub-row { margin-top: 0; }
 .nudge select { height: 36px; min-width: 0; }

@@ -152,6 +152,52 @@ export namespace main {
 	        this.ip = source["ip"];
 	    }
 	}
+	export class OSResult {
+	    fileId: number;
+	    language: string;
+	    langLabel: string;
+	    release: string;
+	    exact: boolean;
+	    downloads: number;
+	    hi: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new OSResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.fileId = source["fileId"];
+	        this.language = source["language"];
+	        this.langLabel = source["langLabel"];
+	        this.release = source["release"];
+	        this.exact = source["exact"];
+	        this.downloads = source["downloads"];
+	        this.hi = source["hi"];
+	    }
+	}
+	export class OSStatus {
+	    available: boolean;
+	    builtIn: boolean;
+	    ownKey: boolean;
+	    user: string;
+	    remaining: number;
+	    resetIn: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OSStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.available = source["available"];
+	        this.builtIn = source["builtIn"];
+	        this.ownKey = source["ownKey"];
+	        this.user = source["user"];
+	        this.remaining = source["remaining"];
+	        this.resetIn = source["resetIn"];
+	    }
+	}
 	export class PrepareResult {
 	    output: string;
 	    recycled: boolean;
@@ -179,6 +225,10 @@ export namespace main {
 	    setupDone: boolean;
 	    tmdb: string;
 	    tmdbKey: string;
+	    osKey: string;
+	    osUser: string;
+	    osToken: string;
+	    osBase: string;
 	    noAutoSync: boolean;
 	
 	    static createFrom(source: any = {}) {
@@ -197,6 +247,10 @@ export namespace main {
 	        this.setupDone = source["setupDone"];
 	        this.tmdb = source["tmdb"];
 	        this.tmdbKey = source["tmdbKey"];
+	        this.osKey = source["osKey"];
+	        this.osUser = source["osUser"];
+	        this.osToken = source["osToken"];
+	        this.osBase = source["osBase"];
 	        this.noAutoSync = source["noAutoSync"];
 	    }
 	}
