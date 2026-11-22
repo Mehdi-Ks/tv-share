@@ -11,14 +11,36 @@ let preparing = null;          // path of the movie being prepared
 const posters = new Map();     // path -> data URL, or "" when no frame could be taken
 
 // ---------- helpers ----------
-function toast(msg, isError = false, ms = 4200) {
-  const t = el("div", { class: "toast" + (isError ? " error" : ""), text: msg });
-  $("toasts").append(t);
-  setTimeout(() => {
+// toast(msg, isError, ms, extra...): extra nodes (a hint, an action button) go after the message.
+function toast(msg, isError = false, ms = 4200, ...extra) {
+  const t = el("div", { class: "toast" + (isError ? " error" : "") + (extra.length ? " has-action" : "") }, el("span", { text: msg }), ...extra);
+  const box = $("toasts");
+  // Messages live in the top layer, above the movie page and dialogs (which are in it too), and
+  // inside the open one: everything outside an open dialog can't be clicked.
+  const host = [...document.querySelectorAll("dialog[open]")].pop() || document.body;
+  if (box.parentElement !== host) host.append(box);
+  box.append(t);
+  if (box.showPopover) {
+    try { if (box.matches(":popover-open")) box.hidePopover(); box.showPopover(); } catch {}
+  }
+  // A message with a button stays while the pointer is on it, so it can't vanish mid-click.
+  const leave = () => {
+    if (t.matches(":hover")) { setTimeout(leave, 1500); return; }
     t.classList.add("leaving");
-    setTimeout(() => t.remove(), 180);
-  }, ms);
+    setTimeout(() => {
+      t.remove();
+      if (!box.children.length && box.hidePopover) { try { box.hidePopover(); } catch {} }
+    }, 180);
+  };
+  setTimeout(leave, extra.length ? Math.max(ms, 20000) : ms);
 }
+// When a dialog holding the messages closes, move them to what's still open so they don't vanish.
+document.addEventListener("close", (e) => {
+  const box = $("toasts");
+  if (e.target.tagName !== "DIALOG" || !e.target.contains(box)) return;
+  (([...document.querySelectorAll("dialog[open]")].pop()) || document.body).append(box);
+  if (box.children.length && box.showPopover) { try { box.showPopover(); } catch {} }
+}, true);
 function localStorageGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function localStorageSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
 const errText = (e) => (e && e.message) || String(e || "Something went wrong");
@@ -544,7 +566,8 @@ function movieCard(m) {
     class: "card", tabindex: "-1", "data-path": m.path, "data-title": m.title.toLowerCase(), "data-subs": canGetSubs(m) ? "1" : "0",
     "aria-label": `${m.title}, ${gb(m.sizeMB)}, ${statusText}. Press Enter for details.`,
   }, poster, el("div", { class: "card-title", text: name, title: m.path, "data-no-tr": true }), meta);
-  card.addEventListener("click", () => openDetail(m, card));
+  card.addEventListener("click", () => { cardClickAt = Date.now(); openDetail(m, card); });
+  card.addEventListener("dblclick", () => playOnPC(m)); // the page opened on the first click stays behind the player
   card.addEventListener("keydown", (e) => {
     if (e.target === card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openDetail(m, card); }
   });
@@ -649,6 +672,42 @@ function closeDetail() {
 $("detailBack").addEventListener("click", closeDetail);
 $("detail").addEventListener("cancel", (e) => { e.preventDefault(); closeDetail(); });
 $("dShow").addEventListener("click", () => detailMovie && api().ShowInFolder(detailMovie.path));
+$("dPlay").addEventListener("click", () => detailMovie && playOnPC(detailMovie));
+
+// ---------- play on this PC ----------
+// Opens the movie in the PC's own video player. TV Share can't see inside that player, so unless it
+// already is VLC, the message offers VLC: it plays every format here and shows built-in subtitles.
+function vlcAction(r, m) {
+  return r.hasVLC
+    ? el("button", { type: "button", class: "toast-action", text: "Play in VLC", onclick: async (e) => {
+        e.currentTarget.closest(".toast")?.remove();
+        try { await api().PlayInVLC(m.path); } catch (err) { toast(errText(err), true); }
+      } })
+    : el("button", { type: "button", class: "toast-action", text: "Get VLC (free)", onclick: () => api().GetVLCPage() });
+}
+let lastPlay = 0, cardClickAt = 0;
+// Double-clicking a poster: the first click opens the full-window page (with a transition, during
+// which clicks go to the document itself), so catch the second click wherever it lands.
+const secondClick = (e) => {
+  if (e.detail >= 2 && Date.now() - cardClickAt < 800 && detailMovie) playOnPC(detailMovie);
+};
+document.addEventListener("click", secondClick, true);
+document.addEventListener("dblclick", secondClick, true);
+async function playOnPC(m) {
+  if (Date.now() - lastPlay < 1500) return; // a double-click on the button shouldn't open it twice
+  lastPlay = Date.now();
+  let r = { player: "", isVLC: false, hasVLC: false };
+  try {
+    r = await api().PlayOnPC(m.path);
+  } catch (e) {
+    const msg = errText(e);
+    toast(/[.!?]$/.test(msg) ? msg : msg + ".", true, 12000, vlcAction(r, m));
+    return;
+  }
+  const opening = r.player ? `Opening in ${r.player}.` : "Opening in your video player.";
+  if (r.isVLC) { toast(opening); return; }
+  toast(opening, false, 12000, el("span", { text: "Won't play, or no subtitles?" }), vlcAction(r, m));
+}
 
 function fillMeta(m) {
   if (!tmdbOn()) return;

@@ -32,6 +32,8 @@ export function GetPoster(arg1:string):Promise<string>;
 
 export function GetState():Promise<main.State>;
 
+export function GetVLCPage():Promise<void>;
+
 export function InstallDeps():Promise<main.DepsStatus>;
 
 export function Languages():Promise<Array<any>>;
@@ -51,6 +53,10 @@ export function OpenSubtitlesSignupPage():Promise<void>;
 export function OpenURL(arg1:string):Promise<void>;
 
 export function PickFolder(arg1:string):Promise<string>;
+
+export function PlayInVLC(arg1:string):Promise<void>;
+
+export function PlayOnPC(arg1:string):Promise<main.PlayResult>;
 
 export function RefreshNetwork():Promise<main.NetworkInfo>;
 

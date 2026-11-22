@@ -62,6 +62,10 @@ export function GetState() {
   return window['go']['main']['App']['GetState']();
 }
 
+export function GetVLCPage() {
+  return window['go']['main']['App']['GetVLCPage']();
+}
+
 export function InstallDeps() {
   return window['go']['main']['App']['InstallDeps']();
 }
@@ -100,6 +104,14 @@ export function OpenURL(arg1) {
 
 export function PickFolder(arg1) {
   return window['go']['main']['App']['PickFolder'](arg1);
+}
+
+export function PlayInVLC(arg1) {
+  return window['go']['main']['App']['PlayInVLC'](arg1);
+}
+
+export function PlayOnPC(arg1) {
+  return window['go']['main']['App']['PlayOnPC'](arg1);
 }
 
 export function RefreshNetwork() {

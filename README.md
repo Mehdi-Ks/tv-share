@@ -41,6 +41,10 @@ Needs Windows 10 or 11, 64-bit. The app is in **English and French** (it follows
 2. The first time, Windows asks whether **Rclone** may use the network (Rclone is the helper that talks to the TV). Click **Allow**.
 3. Keep the app open and the PC awake while you watch.
 
+**Watching on the PC instead?** Double-click a poster, or open the movie and click **Play on this PC**. It opens in
+your usual video player. If it won't play or the subtitles don't show, the app offers **VLC** (it plays every format
+here and shows built-in subtitles), or a link to get it for free.
+
 Keyboard: arrow keys move across the posters, Enter opens a movie, Esc goes back, Ctrl+F searches.
 
 The **?** button opens these steps inside the app. Your PC's name on the TV, the movie folder and the network are in **Settings**.

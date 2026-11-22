@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.1 (2026-11-22)
+
+- **Play on this PC.** Double-click a poster, or click **Play on this PC** on a movie's page, to watch it on the
+  computer in your usual video player. If that player isn't VLC, the app asks "Won't play, or no subtitles?" and
+  offers **Play in VLC**, or **Get VLC (free)** if it isn't installed. VLC plays every format TV Share handles and
+  shows the subtitles built into the movie.
+- Fixed: messages (like "Subtitles added") were hidden behind an open movie page or Settings.
+
 ## 1.8.0 (2026-11-22)
 
 - **Find subtitles online.** On a movie's page, pick a language and search OpenSubtitles.com. Subtitles made for

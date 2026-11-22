@@ -198,6 +198,22 @@ export namespace main {
 	        this.resetIn = source["resetIn"];
 	    }
 	}
+	export class PlayResult {
+	    player: string;
+	    isVLC: boolean;
+	    hasVLC: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PlayResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.player = source["player"];
+	        this.isVLC = source["isVLC"];
+	        this.hasVLC = source["hasVLC"];
+	    }
+	}
 	export class PrepareResult {
 	    output: string;
 	    recycled: boolean;
