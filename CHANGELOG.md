@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.1 (2026-11-23)
+
+- Two copies of the same episode (say a 720p and a 1080p file) are told apart on the show's page: each row shows its
+  picture quality and size, for example "1080p · 1.4 GB". The episode count counts them once.
+
 ## 1.9.0 (2026-11-22)
 
 - **TV shows.** Episodes are recognised from their names (`S01E03`, `1x03`, or a "Season 1" folder) and grouped

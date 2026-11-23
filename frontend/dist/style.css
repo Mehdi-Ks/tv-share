@@ -267,6 +267,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .ep-sub .ok { color: var(--ok); display: inline-flex; align-items: center; gap: 3px; }
 .ep-sub .ok svg { width: 12px; height: 12px; }
 .ep-sub .srt { color: var(--accent); }
+.ep-sub .ep-copy { color: var(--text); font-variant-numeric: tabular-nums; }
 .ep-play { flex: none; }
 .ep-play svg { width: 16px; height: 16px; }
 .ep-busy { display: flex; align-items: center; gap: 10px; padding-right: 8px; color: var(--muted); font-size: 12.5px; }

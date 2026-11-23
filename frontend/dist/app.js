@@ -648,7 +648,7 @@ function showCard(sh) {
   const poster = posterEl(sh);
   const meta = el("div", { class: "card-meta" });
   if (year) meta.append(el("span", { text: year }));
-  const nEp = sh.episodes.length;
+  const nEp = uniqueEpisodes(sh);
   const nSeasons = sh.seasons.filter((n) => n > 0).length;
   meta.append(el("span", { text: nSeasons > 1 ? `${nSeasons} seasons` : `${nEp} episode${nEp === 1 ? "" : "s"}` }));
   if (sh.hasSubs) meta.append(el("span", { class: "ok" }, icon("i-cc"), document.createTextNode("CC")));
@@ -846,7 +846,7 @@ function fillShow(sh) {
   $("sYear").textContent = year;
   const nSeasons = sh.seasons.filter((n) => n > 0).length;
   $("sSeasonCount").textContent = nSeasons > 1 ? `${nSeasons} seasons` : "";
-  const nEp = sh.episodes.length;
+  const nEp = uniqueEpisodes(sh);
   $("sEpCount").textContent = `${nEp} episode${nEp === 1 ? "" : "s"}`;
   $("sSize").textContent = gb(sh.sizeMB);
   const dp = $("showPoster");
@@ -934,8 +934,13 @@ function renderEpisodes(sh) {
   const list = $("sEpisodes");
   list.replaceChildren();
   const n = showSeason;
-  for (const ep of sh.episodes.filter((e) => e.season === n)) {
+  const eps = sh.episodes.filter((e) => e.season === n);
+  // Two copies of one episode (720p and 1080p, say) would look identical: label them.
+  const seen = new Map();
+  for (const e of eps) seen.set(e.episode, (seen.get(e.episode) || 0) + 1);
+  for (const ep of eps) {
     const tm = tmdbEpisode(ep);
+    const copy = seen.get(ep.episode) > 1 ? copyLabel(ep) : null;
     // A TMDB picture when there is one; no empty box otherwise.
     const still = tm && tm.stillPath ? el("div", { class: "ep-still" }) : null;
     if (still) loadStill(tm.stillPath, still);
@@ -947,7 +952,7 @@ function renderEpisodes(sh) {
       still,
       el("span", { class: "ep-text" },
         el("strong", {}, el("span", { class: "ep-num", text: String(ep.episode) }), el("span", { text: epName(ep), "data-no-tr": true })),
-        el("small", { class: "ep-sub" }, mins, status)));
+        el("small", { class: "ep-sub" }, copy, mins, status)));
     open.addEventListener("click", () => { cardClickAt = Date.now(); openEpisode(ep); });
     const row = el("li", { class: "ep", "data-path": ep.path }, open);
     if (preparing === ep.path) {
@@ -961,6 +966,19 @@ function renderEpisodes(sh) {
     loadSeason(sh, n).then(() => { if (showOpen && showOpen.key === sh.key && showSeason === n) renderEpisodes(showOpen); });
   }
 }
+
+// "1080p · 1.4 GB": the size right away, the picture quality once the file has been read.
+function copyLabel(ep) {
+  const tag = el("span", { class: "ep-copy", "data-no-tr": true });
+  const fill = (i) => { tag.textContent = [i && i.resolution, gb(ep.sizeMB)].filter(Boolean).join(" · "); };
+  const info = infoCache.get(ep.path);
+  fill(info);
+  if (!info) api().GetMovieInfo(ep.path).then((i) => { infoCache.set(ep.path, i); fill(i); }).catch(() => {});
+  return tag;
+}
+
+// Episodes counted once each, however many copies of a file there are.
+const uniqueEpisodes = (sh) => new Set(sh.episodes.map((e) => `${e.season}:${e.episode}`)).size;
 
 function openEpisode(ep) {
   detailCard = null;
